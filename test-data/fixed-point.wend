@@ -1,0 +1,86 @@
+fun main() {
+
+    // This program outputs a decimal representation of a signed 32-bit fixed point number.
+    // It prints the number one character at a time without ever printing an integer type expression,
+    // like we would make it with aid of _write system call.
+
+    fun print_fixed_point(x:int, shift:int) {
+        var decpr:int;
+        var i:int;
+
+        fun decpr(shift:int) : int { // number of meaningful digits after the decimal point
+            var decpr:int;
+            decpr = 0;
+            while shift>0 {
+                decpr = decpr + 1;
+                shift = shift / 10;
+            }
+            return decpr;
+        }
+
+        fun print_digit(d:int) {
+            if d==0 {
+                print "0";
+            } else {
+                if d==1 {
+                    print "1";
+                } else {
+                    if d==2 {
+                        print "2";
+                    } else {
+                        if d==3 {
+                            print "3";
+                        } else {
+                            if d==4 {
+                                print "4";
+                            } else {
+                                if d==5 {
+                                    print "5";
+                                } else {
+                                    if d==6 {
+                                        print "6";
+                                    } else {
+                                        if d==7 {
+                                            print "7";
+                                        } else {
+                                            if d==8 {
+                                                print "8";
+                                            } else {
+                                                if d==9 {
+                                                    print "9";
+                                                } else {
+                                                    print "invalid input";
+                                                }}}}}}}}}}
+        }
+
+        fun print_integer(x:int) {
+            if x>0 {
+                print_integer(x / 10);
+                print_digit(x % 10); // recursion to reverse the print
+            }
+        }
+
+        if x<0 {
+            print "-";
+            x = -x;
+        }
+
+        print_integer(x / shift);
+        print ".";
+
+        decpr = decpr(shift);
+        i = 0;
+        x = (x % shift) * 10;
+        while i<decpr {
+            print_digit((x / shift) % 10);
+            x = (x % shift) * 10;
+            i = i + 1;
+        }
+        println "";
+    }
+
+    // print number -pi up to 16 bits (10^-5) precision
+    // 205887 = int(pi * 2^16)
+    print_fixed_point(-205887, 65536);
+}
+

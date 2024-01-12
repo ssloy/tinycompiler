@@ -1,0 +1,22 @@
+fun main() {
+    var test:int;
+
+    // count number of set bits in binary representation of a positive integer n
+    fun popcount(n:int) : int {
+        var cnt:int;
+
+        cnt = 0;
+        while n > 0 {
+            cnt = cnt + n % 2;
+            n = n / 2;
+        }
+        return cnt;
+    }
+
+    test = 534219;
+    print "number of 1s in the binary representation of ";
+    print test;
+    print " is ";
+    println popcount(test);
+}
+

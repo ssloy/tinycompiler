@@ -1,0 +1,17 @@
+fun main() {
+    var x:int;
+
+    fun f(y:int) {
+        fun g(y:int) {
+            x = y + 1;
+        }
+
+      x = y;
+      g(x + 1);
+    }
+
+    x = 0;
+    f(x + 1);
+    println x;
+}
+

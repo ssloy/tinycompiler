@@ -1,11 +1,3 @@
-# tinycompiler - a 500-ish lines of code compiler in a weekend
-Have you ever wondered how a compiler works? If so, this project is for you.
-
-This weekend I'll write a compiler that translates a code written in a very simple programming language Wend (short for a week-end) into GNU assembly.
-This repository, however, will contain more than the final code. It will tell you a story about compilers.
-
-So behold, here is a program that uses virtually all concepts in Wend:
-```cpp
 fun main() {
     // square root of a fixed-point number
     // stored in a 32 bit integer variable, shift is the precision
@@ -42,14 +34,4 @@ fun main() {
 
     println sqrt(25735, 8192);
 }
-```
-
-There will no be dynamic memory allocation, no pointers, no garbage collection. There will be nested functions, function overloading and type checking.
-
-And as usual, there will be a program with a raytracer :)
-
-## run tests
-```sh
-make test
-```
 

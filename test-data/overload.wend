@@ -1,0 +1,21 @@
+fun main() {
+    fun main(x:int) : int {
+        return x;
+    }
+
+    fun main(x:int, y:int) : int {
+        return x + y;
+    }
+
+    fun main(x:bool) : int {
+        if x {
+            return 0;
+        }
+        return 2;
+    }
+
+    println main(0);
+    println main(0, 1);
+    println main(false);
+}
+

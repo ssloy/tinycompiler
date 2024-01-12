@@ -1,0 +1,31 @@
+fun main() {
+    var n:int;
+
+    fun even(n:int) : bool {
+        if n == 0 {
+            return true;
+        } else {
+            return odd(abs(n) - 1);
+        }
+    }
+
+    fun odd(n:int) : bool {
+        if n == 0 {
+            return false;
+        } else {
+            return even(abs(n) - 1);
+        }
+    }
+
+    fun abs(n:int) : int {
+        if n < 0 {
+            return -n;
+        } else {
+            return n;
+        }
+    }
+
+    n = -255;
+    print "odd("; print n; print ") = "; println odd(n);
+}
+
