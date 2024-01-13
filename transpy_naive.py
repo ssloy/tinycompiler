@@ -34,8 +34,10 @@ def expr(n):
         pyeq = {'/':'//', '||':'or', '&&':'and'}
         pyop = pyeq[n.op] if n.op in pyeq else n.op
         return '(%s) %s (%s)' % (expr(n.left), pyop, expr(n.right))
-    elif isinstance(n, Integer) or isinstance(n, Boolean) or isinstance(n, String):
+    elif isinstance(n, Integer) or isinstance(n, Boolean):
         return str(n.value)
+    elif isinstance(n, String):
+        return '"' + n.value + '"'
     elif isinstance(n, Var):
         return n.name
     elif isinstance(n, FunCall):

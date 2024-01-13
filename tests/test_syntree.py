@@ -62,13 +62,13 @@ def test_syntree(tmp_path):
 
     program = transpy(main_fun)
 
-#   print(program)
-#   old_stdout = sys.stdout
-#   with open(tmp_path / 'sqrt.py', 'w') as output:
-#       sys.stdout = output
-#       print(program)
-#       sys.stdout = old_stdout
-#   old_stdout = sys.stdout
+    print(program) # save the output to a temp dir
+    old_stdout = sys.stdout
+    with open(tmp_path / 'sqrt.py', 'w') as output:
+        sys.stdout = output
+        print(program)
+        sys.stdout = old_stdout
+    old_stdout = sys.stdout
 
     old_stdout = sys.stdout
     sys.stdout = io.StringIO()
