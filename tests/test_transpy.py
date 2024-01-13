@@ -3,6 +3,7 @@ import pytest
 import io, sys
 from lexer import WendLexer
 from parser import WendParser
+from analyzer import *
 from transpy_naive import *
 
 @pytest.mark.parametrize('test_case', (
@@ -18,6 +19,7 @@ def test_transpy(tmp_path, test_case):
 
     tokens = WendLexer().tokenize(f.read())
     ast = WendParser().parse(tokens)
+    build_symtable(ast)
 
     program = transpy(ast)
     old_stdout = sys.stdout

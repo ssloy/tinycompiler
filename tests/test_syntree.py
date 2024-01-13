@@ -1,6 +1,7 @@
 import pytest
 import io, sys # for exec stdout redirection
 from syntree import *
+from analyzer import *
 from transpy_naive import *
 
 def test_syntree(tmp_path):
@@ -60,6 +61,7 @@ def test_syntree(tmp_path):
         ],
         {'type':Type.VOID})     # return type
 
+    build_symtable(main_fun)
     program = transpy(main_fun)
 
     print(program) # save the output to a temp dir

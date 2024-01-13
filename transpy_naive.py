@@ -3,11 +3,13 @@ from syntree import *
 def transpy(n):
     funname   = n.name
     funargs   = ', '.join([v for v,t in n.args])
+    nonlocals = ('nonlocal ' + ', '.join([v for v in n.deco['nonlocal'] ])) if len(n.deco['nonlocal']) else 'pass # no non-local variables'
     allocvars = ''.join(['%s = None\n' % v for v,t in n.var])
     nestedfun = ''.join([transpy(f) for f in n.fun])
     funbody   = ''.join([stat(s) for s in n.body])
     return f'def {funname}({funargs}):\n' + \
-            indent(f'{allocvars}\n'
+            indent(f'{nonlocals}\n'
+                   f'{allocvars}\n'
                    f'{nestedfun}\n'
                    f'{funbody}\n') + \
           (f'{funname}()\n' if n.name=='main' else '')
