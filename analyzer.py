@@ -14,6 +14,7 @@ def build_symtable(ast):
     symtable = SymbolTable()
     symtable.add_fun(ast.name, [], ast.deco)
     ast.deco['label']   = ast.name + '_' + LabelFactory.new_label() # unique label
+    ast.deco['strings'] = [] # collection of constant strings from the program
     process_scope(ast, symtable)
     ast.deco['scope_cnt'] = symtable.scope_cnt # total number of functions, necessary for the static scope display table allocation
 
@@ -102,6 +103,8 @@ def process_expr(n, symtable): # process "expression" syntax tree nodes
         n.deco['type']    = deco['type']
     elif isinstance(n, String): # no type checking is necessary
         n.deco['type']  = Type.STRING
+        n.deco['label'] = LabelFactory.new_label() # unique label for assembly code
+        symtable.ret_stack[1]['strings'].append((n.deco['label'], n.value))
     else:
         raise Exception('Unknown expression type', n)
 
