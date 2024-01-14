@@ -1,11 +1,19 @@
 from syntree import *
 from symtable import *
 
+class LabelFactory: # this is a suffix to add to all function names
+    counter = 0     # in particular, it is useful for function overloading
+    @staticmethod   # it is also useful for different goto labels (loops, conditional statements etc) in assembly code
+    def new_label():
+        LabelFactory.counter += 1
+        return "uniqstr%d" % LabelFactory.counter
+
 def build_symtable(ast):
     if not isinstance(ast, Function) or ast.name != 'main' or ast.deco['type'] != Type.VOID or len(ast.args)>0:
         raise Exception('Cannot find a valid entry point')
     symtable = SymbolTable()
     symtable.add_fun(ast.name, [], ast.deco)
+    ast.deco['label']   = ast.name + '_' + LabelFactory.new_label() # unique label
     process_scope(ast, symtable)
 
 def process_scope(fun, symtable):
@@ -17,6 +25,7 @@ def process_scope(fun, symtable):
         symtable.add_var(*v)
     for f in fun.fun:  # process nested functions: first add function symbols to the table
         symtable.add_fun(f.name, [d['type'] for v,d in f.args], f.deco)
+        f.deco['label'] = f.name + '_' + LabelFactory.new_label() # still need unique labels
     for f in fun.fun:  # then process nested function bodies
         process_scope(f, symtable)
     for s in fun.body: # process the list of statements
@@ -82,6 +91,7 @@ def process_expr(n, symtable): # process "expression" syntax tree nodes
         for s in n.args:
             process_expr(s, symtable)
         deco = symtable.find_fun(n.name, [a.deco['type'] for a in n.args])
+        n.deco['fundeco'] = deco # save the function symbol, useful for overloading and for stack preparation
         n.deco['type']    = deco['type']
     elif isinstance(n, String): # no type checking is necessary
         n.deco['type']  = Type.STRING

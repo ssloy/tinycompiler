@@ -1,7 +1,7 @@
 from syntree import *
 
 def transpy(n):
-    funname   = n.name
+    funname   = n.deco['label']
     funargs   = ', '.join([v for v,t in n.args])
     nonlocals = ('nonlocal ' + ', '.join([v for v in n.deco['nonlocal'] ])) if len(n.deco['nonlocal']) else 'pass # no non-local variables'
     allocvars = ''.join(['%s = None\n' % v for v,t in n.var])
@@ -12,7 +12,7 @@ def transpy(n):
                    f'{allocvars}\n'
                    f'{nestedfun}\n'
                    f'{funbody}\n') + \
-          (f'{funname}()\n' if n.name=='main' else '')
+          (f'{funname}()\n' if n.name=='main' and len(n.args)==0 else '')
 
 def stat(n):
     if isinstance(n, Print):
@@ -43,7 +43,7 @@ def expr(n):
     elif isinstance(n, Var):
         return n.name
     elif isinstance(n, FunCall):
-        return '%s(%s)' % (n.name, ', '.join([expr(s) for s in n.args]))
+        return '%s(%s)' % (n.deco['fundeco']['label'], ', '.join([expr(s) for s in n.args]))
     raise Exception('Unknown expression type', n)
 
 def indent(array):
