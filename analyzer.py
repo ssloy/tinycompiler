@@ -15,14 +15,17 @@ def build_symtable(ast):
     symtable.add_fun(ast.name, [], ast.deco)
     ast.deco['label']   = ast.name + '_' + LabelFactory.new_label() # unique label
     process_scope(ast, symtable)
+    ast.deco['scope_cnt'] = symtable.scope_cnt # total number of functions, necessary for the static scope display table allocation
 
 def process_scope(fun, symtable):
     fun.deco['nonlocal'] = set() # set of nonlocal variable names in the function body, used in "readable" python transpilation only
+    fun.deco['local'] = []       # set of local variable names: len*4 is the memory necessary on the stack, the names are here to be put in comments
     symtable.push_scope(fun.deco)
     for v in fun.args: # process function arguments
         symtable.add_var(*v)
     for v in fun.var:  # process local variables
         symtable.add_var(*v)
+        fun.deco['local'].append(v[0])
     for f in fun.fun:  # process nested functions: first add function symbols to the table
         symtable.add_fun(f.name, [d['type'] for v,d in f.args], f.deco)
         f.deco['label'] = f.name + '_' + LabelFactory.new_label() # still need unique labels
@@ -43,6 +46,8 @@ def process_stat(n, symtable): # process "statement" syntax tree nodes
     elif isinstance(n, Assign):
         process_expr(n.expr, symtable)
         deco = symtable.find_var(n.name)
+        n.deco['scope']  = deco['scope']
+        n.deco['offset'] = deco['offset']
         n.deco['type'] = deco['type']
         if n.deco['type'] != n.expr.deco['type']:
             raise Exception('Incompatible types in assignment statement, line %s', n.deco['lineno'])
@@ -86,6 +91,8 @@ def process_expr(n, symtable): # process "expression" syntax tree nodes
     elif isinstance(n, Var):     # no type checking is necessary
         deco = symtable.find_var(n.name)
         n.deco['type']   = deco['type']
+        n.deco['scope']  = deco['scope']
+        n.deco['offset'] = deco['offset']
         update_nonlocals(n.name, symtable) # used in "readable" python transpilation only
     elif isinstance(n, FunCall):
         for s in n.args:

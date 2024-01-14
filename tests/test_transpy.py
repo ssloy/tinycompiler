@@ -4,7 +4,7 @@ import io, sys
 from lexer import WendLexer
 from parser import WendParser
 from analyzer import *
-from transpy_naive import *
+from transpy_novars import *
 
 @pytest.mark.parametrize('test_case', (
         'helloworld', 'sqrt', 'fixed-point', 'scope', 'overload', 'mutual-recursion'
