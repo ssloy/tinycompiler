@@ -1,0 +1,67 @@
+fun main() {
+    // constants
+    var l:int;
+    var w:int;
+    var h:int;
+    var s:int;
+
+    // variables
+    var x:int;
+    var y:int;
+    var r:int;
+    var v:int;
+    var d:int;
+    var e:int;
+    var a:int;
+    var z:int;
+
+    fun palette(i:int) {
+        if (i==0)  { print "."; }
+        if (i==1)  { print ","; }
+        if (i==2)  { print "'"; }
+        if (i==3)  { print "~"; }
+        if (i==4)  { print "="; }
+        if (i==5)  { print "+"; }
+        if (i==6)  { print ":"; }
+        if (i==7)  { print ";"; }
+        if (i==8)  { print "["; }
+        if (i==9)  { print "/"; }
+        if (i==10) { print "<"; }
+        if (i==11) { print "&"; }
+        if (i==12) { print "?"; }
+        if (i==13) { print "o"; }
+        if (i==14) { print "x"; }
+        if (i==15) { print "O"; }
+        if (i==16) { print "X"; }
+        if (i==17) { print "#"; }
+        if (i>=18) { print " "; }
+    }
+
+    l = 19;
+    w = 80;
+    h = 25;
+    s = 8192;
+
+    y = 0;
+    while (y<h) {
+        r = -(125*s)/100 + ((25*s/10)*y)/h;
+        x = 0;
+        while (x<w) {
+            v = -2*s + ((25*s/10)*x)/w;
+            d = 0;
+            e = 0;
+            a = -1;
+            while (a<l-1 && d*d+e*e<4*s*s) {
+                z = (d*d-e*e)/s+v;
+                e = (d+d)*e/s + r;
+                d = z;
+                a = a + 1;
+            }
+            palette(a);
+            x = x + 1;
+        }
+        println "";
+        y = y + 1;
+    }
+}
+
