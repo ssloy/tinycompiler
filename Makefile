@@ -6,7 +6,7 @@ MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
 VENV := $(shell echo $${VIRTUAL_ENV-.venv})
-PY3 := $(shell command -v python3 2	/dev/null)
+PY3 := $(shell command -v python3 2>/dev/null)
 PYTHON := $(VENV)/bin/python
 INSTALL_STAMP := $(VENV)/.install.stamp
 
