@@ -124,7 +124,7 @@ class WendParser(Parser):
 
     @_('NOT expr')
     def expr(self, p):
-        return LogicOp('==', Boolean('False'), p.expr, {'lineno':p.lineno})
+        return LogicOp('==', Boolean(False), p.expr, {'lineno':p.lineno})
 
     @_('ID')
     def expr(self, p):
