@@ -14,6 +14,11 @@ BUILDDIR=build
 WENDDIR=test-data
 TESTS = $(patsubst $(WENDDIR)/%.wend, $(BUILDDIR)/%.wend, $(wildcard $(WENDDIR)/*.wend))
 
+GFXDIR=gfx
+GFXASM = $(patsubst $(GFXDIR)/%.wend, $(BUILDDIR)/%.s,   $(wildcard $(GFXDIR)/*.wend))
+GFXOBJ = $(patsubst $(GFXDIR)/%.wend, $(BUILDDIR)/%.o,   $(wildcard $(GFXDIR)/*.wend))
+GFXEXE = $(patsubst $(GFXDIR)/%.wend, $(BUILDDIR)/%.exe, $(wildcard $(GFXDIR)/*.wend))
+
 .PHONY: test run clean
 
 $(PYTHON):
@@ -43,7 +48,19 @@ run: $(INSTALL_STAMP)
 		$$ELF | diff $$EXP - ; \
 	done
 
+$(BUILDDIR):
+	@mkdir -p $(BUILDDIR)
 
+$(BUILDDIR)/%.exe: $(BUILDDIR)/%.o
+	ld -m elf_i386 $< -o $@
+
+$(BUILDDIR)/%.o: $(BUILDDIR)/%.s
+	as --march=i386 --32 -o $@ $<
+
+$(BUILDDIR)/%.s: $(GFXDIR)/%.wend
+	$(PYTHON) compiler.py $< > $@
+
+gfx: $(INSTALL_STAMP) $(BUILDDIR) $(GFXASM) $(GFXOBJ) $(GFXEXE)
 
 clean:
 	@rm -rf $(BUILDDIR)
