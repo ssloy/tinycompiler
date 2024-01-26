@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <unistd.h> // for usleep()
-#define FPS 30
+#define FPS 50
 #define ABS(a) (((a) < 0) ? -(a) : (a))
 #define CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
@@ -10,7 +10,7 @@ struct Ball { int x[2], v[2]; } balls[2];
 bool bricks[48*48]; // The battlefield. The brick grid is 16x16, but it is zoomed x4 for more fluid motion
 
 int xor_bricks(int x, int y, bool ball) { // flip a 4x4 block of the battlefield
-    int hit = -1;                        // N.B. the block is not aligned to the brick grid
+    int hit = -1;                         // N.B. the block is not aligned to the brick grid
     for (int i=0; i<16; i++) {
         int idx = x+i%4+(y+i/4)*48;
         if ((bricks[idx] ^= true) == ball) hit = idx; // if a ball hits a brick, return the brick position
@@ -37,15 +37,13 @@ int main() {
                     if (balls[b].x[d]<0 || balls[b].x[d]>48-4) { // bounce the ball off the walls
                         balls[b].x[d] = CLAMP(balls[b].x[d], 0, 48-4);
                         balls[b].v[d] = -balls[b].v[d];
-                        break;
                     }
                     int hit = xor_bricks(balls[b].x[0], balls[b].x[1], !b); // draw the ball and check if it hits a brick
                     xor_bricks(balls[b].x[0], balls[b].x[1], !b);           // immediately clear the ball
                     if (hit!=-1) { // if we hit a brick
                         xor_bricks(((hit%48)/4)*4, ((hit/48)/4)*4, !b); // snap the hit to the brick grid and break the brick
-                        balls[b].v[d] = -balls[b].v[d];                // bounce the ball off the brick
+                        balls[b].v[d] = -balls[b].v[d];                 // bounce the ball off the brick
                         balls[b].x[d] += balls[b].v[d] > 0 ? 1 : -1;
-                        break;
                     }
                 }
 
@@ -55,7 +53,7 @@ int main() {
             for (int i=0; i<48; i++) {
                 printf("\033[48;2;%sm",palette[bricks[i + (j+0)*48]]); // set background color
                 printf("\033[38;2;%sm",palette[bricks[i + (j+1)*48]]); // set foreground color
-                printf("\xE2\x96\x83");                               // half-block Unicode symbol
+                printf("\xE2\x96\x83");                                // half-block Unicode symbol
             }
             printf("\033[49m\n");
         }
