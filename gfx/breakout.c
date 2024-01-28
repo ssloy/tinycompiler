@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <unistd.h> // for usleep()
-#define FPS 50
+
 #define ABS(a) (((a) < 0) ? -(a) : (a))
 #define CLAMP(x, low, high) (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
@@ -59,7 +59,7 @@ int main() {
         }
         for (int b=0; b<2; b++)     // clear the balls from the battlefield
             xor_bricks(balls[b].x[0], balls[b].x[1], !b);
-        usleep(1000000/FPS);
+        usleep(1000000/50); // fps
     }
     return 0;
 }
