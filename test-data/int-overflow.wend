@@ -1,0 +1,5 @@
+fun main() {
+    println 256*256*256*128;      // one overflow
+    println 256*256*256*128 - 1;  // two overflows
+}
+

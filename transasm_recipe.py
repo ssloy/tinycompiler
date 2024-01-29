@@ -1,31 +1,29 @@
 templates = {
-'ascii' : '''
-{label}:
-	.ascii "{string}"
+'ascii' : '''{label}: .ascii "{string}"
 	{label}_len = . - {label}
 ''',
 
-'var' : '''
-	movl display+{scope}, %eax
+'var' : '''	movl display+{scope}, %eax
 	movl -{variable}(%eax), %eax
 ''',
 
-'print_linebreak' : '''
-	pushl $10
-	call print_char
+'print_linebreak' : '''	pushl $10           # '\\n'
+	movl $4, %eax       # write system call
+	movl $1, %ebx       # stdout
+	leal 0(%esp), %ecx  # address of the character
+	movl $1, %edx       # one byte
+	int  $0x80          # make system call
 	addl $4, %esp
 ''',
 
-'print_int' : '''
-{expr}
+'print_int' : '''{expr}
 	pushl %eax
 	call print_int32
 	addl $4, %esp
 {newline}
 ''',
 
-'print_string' : '''
-	movl $4, %eax
+'print_string' : '''	movl $4, %eax
 	movl $1, %ebx
 	movl ${label}, %ecx
 	movl ${label}_len, %edx
@@ -33,31 +31,27 @@ templates = {
 {newline}
 ''',
 
-'print_bool' : '''
-{expr}
+'print_bool' : '''{expr}
 	movl $truestr, %ecx
 	movl $truestr_len, %edx
 	test %eax, %eax
-	jnz 1f
+	jnz 0f
 	movl $falsestr, %ecx
 	movl $falsestr_len, %edx
-1:
-	movl $4, %eax
+0:	movl $4, %eax
 	movl $1, %ebx
 	int  $0x80
 {newline}
 ''',
 
-'assign' : '''
-{expression}
+'assign' : '''{expression}
 	pushl %eax
 	movl display+{scope}, %eax
 	popl %ebx
 	movl %ebx, -{variable}(%eax)
 ''',
 
-'ifthenelse' : '''
-{condition}
+'ifthenelse' : '''{condition}
 	test %eax, %eax
 	jz {label1}
 {ibody}
@@ -67,8 +61,7 @@ templates = {
 {label2}:
 ''',
 
-'while' : '''
-{label1}:
+'while' : '''{label1}:
 {condition}
 	test %eax, %eax
 	jz {label2}
@@ -77,8 +70,7 @@ templates = {
 {label2}:
 ''',
 
-'funcall' : '''
-	pushl display+{scope}
+'funcall' : '''	pushl display+{scope}
 {allocargs}
 	subl ${varsize}, %esp
 	leal {disphead}(%esp), %eax
@@ -89,19 +81,15 @@ templates = {
 	popl display+{scope}
 ''',
 
-'program' : '''
-	.global _start
+'program' : '''.global _start
 	.data
 {strings}
-truestr:
-	.ascii "true"
+truestr: .ascii "true"
 	truestr_len = . - truestr
-falsestr:
-	.ascii "false"
+falsestr: .ascii "false"
 	falsestr_len = . - falsestr
 	.align 2
-display:
-	.skip {display_size}
+display: .skip {display_size}
 	.text
 _start:
 	leal -4(%esp), %eax
@@ -113,59 +101,32 @@ _end:               # do not care about clearing the stack
 	movl $1, %eax   # _exit system call (check asm/unistd_32.h for the table)
 	movl $0, %ebx   # error code 0
 	int $0x80       # make system call
-
 {functions}
-
 print_int32:
-	pushl %ebp          # save the old base pointer value
-	movl %esp, %ebp     # set the new base pointer value
-	movl 8(%ebp), %eax  # the number to print
-	test %eax, %eax         # if %eax>0 jump
-	jns abs_result
-	neg %eax                # otherwise negate %eax
-	pushl $45
-	call print_char         # print '-'
-	addl $4, %esp
-abs_result:
+	movl 4(%esp), %eax  # the number to print
+	cdq
+	xorl %edx, %eax
+	subl %edx, %eax     # abs(%eax)
+	pushl $10           # base 10
 	movl %esp, %ecx     # buffer for the string to print
 	subl $16, %esp      # max 10 digits for a 32-bit number (keep %esp dword-aligned)
-	movl $10, %ebx      # base 10
-loop:                   # repeat
-	cdq # xorl %edx, %edx     #     %edx = 0
-	idivl %ebx          #     %eax = %edx:%eax/10 ; %edx = %edx:%eax % 10
+0:	xorl %edx, %edx     #     %edx = 0
+	divl 16(%esp)       #     %eax = %edx:%eax/10 ; %edx = %edx:%eax % 10
 	decl %ecx           #     allocate one more digit
 	addb $48, %dl       #     %edx += '0'       # 0,0,0,0,0,0,0,0,0,0,'1','2','3','4','5','6'
 	movb %dl, (%ecx)    #     store the digit   # ^                   ^                    ^
 	test %eax, %eax     #                       # %esp                %ecx (after)         %ecx (before)
-	jnz loop            # until %eax==0         #                     <----- %edx = 6 ----->
-	movl $4, %eax       # write system call
+	jnz 0b              # until %eax==0         #                     <----- %edx = 6 ----->
+	cmp %eax, 24(%esp)  # if the number is negative
+	jge 0f
+	decl %ecx           # allocate one more character
+	movb $45, 0(%ecx)   # '-'
+0:	movl $4, %eax       # write system call
 	movl $1, %ebx       # stdout
 	leal 16(%esp), %edx # the buffer to print
 	subl %ecx, %edx     # number of digits
 	int $0x80           # make system call
-	addl $16, %esp      # deallocate the buffer
-	movl %ebp, %esp     # standard function footer
-	popl %ebp
-	ret
-
-print_char:
-	pushl %ebp      # save the old base pointer value
-	movl %esp, %ebp # set the new base pointer value
-	pushl %eax
-	pushl %ebx
-	pushl %ecx
-	pushl %edx
-	movl $4, %eax       # write system call
-	movl $1, %ebx       # stdout
-	leal 8(%ebp), %ecx  # address of the character
-	movl $1, %edx       # one byte
-	int  $0x80          # make system call
-	popl %edx
-	popl %ecx
-	popl %ebx
-	popl %eax
-	movl %ebp, %esp
-	popl %ebp
+	addl $20, %esp      # deallocate the buffer
 	ret
 '''
 }
