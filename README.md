@@ -50,6 +50,19 @@ And as usual, there will be a program with a raytracer :)
 
 ## run tests
 ```sh
-make test
+make run
 ```
 
+## Graphics!
+It is so dull to compute Fibonacci numbers, so here are more eyecandy examples for our compiler,  check gfx/*.wend files.
+```sh
+make gfx
+```
+### Mandelbrot set
+![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/mandelbrot.png)
+
+### Zero-player breakout game
+![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/breakout.gif)
+
+### Fire
+![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/fire6.gif)
