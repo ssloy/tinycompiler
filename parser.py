@@ -69,10 +69,10 @@ class WendParser(Parser):
     def statement_list_optional(self, p):
         return []
 
-    @_('PRINT   STRING SEMICOLON',
+    @_('PRINT   STRING SEMICOLON', # TODO: put string into expr
        'PRINTLN STRING SEMICOLON')
     def statement(self, p):
-        return Print(String(p[1][1:-1]), p[0]=='println', {'lineno':p.lineno})
+        return Print(String(p[1]), p[0]=='println', {'lineno':p.lineno})
 
     @_('PRINT   expr SEMICOLON',
        'PRINTLN expr SEMICOLON')

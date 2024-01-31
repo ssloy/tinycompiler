@@ -3,6 +3,9 @@ class Token(object):
         self.type, self.value, self.lineno = t, v, l+1 # mwahaha, +1, sly, wtf? # TODO remove +1
         self.index, self.end = None, None # TODO needed for sly, remove in the future
 
+    def __repr__(self):
+         return f'Token(type={self.type!r}, value={self.value!r}, lineno={self.lineno!r})'
+
 class WendLexer:
     keywords    = {'true':'BOOLVAL','false':'BOOLVAL','print':'PRINT','println':'PRINTLN','int':'INT','bool':'BOOL','var':'VAR','fun':'FUN','if':'IF','else':'ELSE','while':'WHILE','return':'RETURN'}
     double_char = {'==':'EQ', '<=':'LTEQ', '>=':'GTEQ', '!=':'NOTEQ', '&&':'AND', '||':'OR'}
@@ -53,7 +56,7 @@ class WendLexer:
                 if sym1 != '"':                                     # if not quote mark,
                     accum += sym1                                   # continue the scan
                 else:
-                    yield Token('STRING', f'"{accum}"', lineno)     # otherwise emit the token
+                    yield Token('STRING', accum, lineno)            # otherwise emit the token
                     state, accum = 0, '' # start new scan
             if sym1 == '\n':
                 lineno += 1
