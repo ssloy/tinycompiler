@@ -31,7 +31,7 @@ class WendLexer:
                 elif sym1 in self.single_char:         # emit one-character token
                     yield Token(self.single_char[sym1], sym1, lineno)
                 elif sym1 not in ['\r', '\t', ' ', '\n']: # ignore whitespace
-                    raise Exception(f'Lexical error: unexpected character at line {lineno}')
+                    raise Exception(f'Lexical error: illegal character \'{sym1}\' at line {lineno}')
             elif state==3:                                          # scanning a word, check next character
                 if sym1.isalpha() or sym1=='_' or  sym1.isdigit():  # still word?
                     accum += sym1                                   # if yes, continue
