@@ -1,6 +1,6 @@
-class Token(object):
-    def __init__(self, t, v, l):
-        self.type, self.value, self.lineno = t, v, l+1 # mwahaha, +1, sly, wtf? # TODO remove +1
+class Token:
+    def __init__(self, t, v, l=None):
+        self.type, self.value, self.lineno = t, v, (l or 0) +1 # mwahaha, +1, sly, wtf? # TODO remove +1
         self.index, self.end = None, None # TODO needed for sly, remove in the future
 
     def __repr__(self):
