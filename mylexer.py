@@ -9,44 +9,37 @@ class Token(object):
     def __repr__(self):
         return f'Token(type={self.type!r}, value={self.value!r}, lineno={self.lineno!r})'
 
-class State:
-    START   = 0
-    COMMENT = 1
-    STRING  = 2
-    WORD    = 3
-    NUMBER  = 4
-
 def tokenize(text):
     kwd    = {'true':'BOOLVAL','false':'BOOLVAL','print':'PRINT','println':'PRINTLN','int':'INT','bool':'BOOL','var':'VAR','fun':'FUN','if':'IF','else':'ELSE','while':'WHILE','return':'RETURN'}
     double = {'==':'EQ', '<=':'LTEQ', '>=':'GTEQ', '!=':'NOTEQ', '&&':'AND', '||':'OR'}
     single = {'=':'ASSIGN','<':'LT', '>':'GT', '!':'NOT', '+':'PLUS', '-':'MINUS', '/':'DIVIDE', '*':'TIMES', '%':'MOD','(':'LPAREN',')':'RPAREN', '{':'BEGIN', '}':'END', ';':'SEMICOLON', ':':'COLON', ',':'COMMA'}
 
-    lineno, idx, accum, state = 0, 0, '', State.START
+    lineno, idx, state, accum = 0, 0, 0, ''
     while idx<len(text):
         sym1 = text[idx+0] if idx<len(text)-0 else ' '
         sym2 = text[idx+1] if idx<len(text)-1 else ' '
         if sym1 == '\n':
             lineno += 1
-        if state==State.START:
+        if state==0: # start of a token
             if sym1 == '/' and sym2 == '/':
-                state = State.COMMENT
+                state = 1 # comment
             elif sym1.isalpha() or sym1=='_':
-                state = State.WORD
+                state = 3 # word
                 accum += sym1
             elif sym1.isdigit():
-                state = State.NUMBER
+                state = 4 # number
                 accum += sym1
             elif sym1 == '"':
-                state = State.STRING
+                state = 2 # string
             elif sym1 + sym2 in double:
                 yield Token(double[sym1+sym2], sym1+sym2, lineno)
                 idx += 1
             elif sym1 in single:
                 yield Token(single[sym1], sym1, lineno)
-        elif state==State.COMMENT:
+        elif state==1: # comment
             if sym2 == '\n':
-                state = State.START
-        elif state==State.WORD:
+                state = 0 # restart
+        elif state==3: # word
             if sym1.isalpha() or sym1=='_' or  sym1.isdigit():
                 accum += sym1
             else:
@@ -56,22 +49,22 @@ def tokenize(text):
                     yield Token('ID', accum, lineno)
                 accum = ''
                 idx -= 1
-                state = State.START
-        elif state==State.NUMBER:
+                state = 0 # restart
+        elif state==4: # number
             if sym1.isdigit():
                 accum += sym1
             else:
                 yield Token('INTVAL', accum, lineno)
                 idx -= 1
                 accum = ''
-                state = State.START
-        elif state==State.STRING:
+                state = 0 # restart
+        elif state==2: # string
             if sym1 != '"':
                 accum += sym1
             else:
                 yield Token('STRING', f'"{accum}"', lineno)
                 accum = ''
-                state = State.START
+                state = 0 # restart
         idx += 1
-    if state!=State.START:
+    if state!=0:
         raise Exception('Lexical error: unexpected EOF')
