@@ -7,9 +7,9 @@ class Token(object):
          return f'Token(type={self.type!r}, value={self.value!r}, lineno={self.lineno!r})'
 
 class WendLexer:
-    keywords    = {'true':'BOOLVAL','false':'BOOLVAL','print':'PRINT','println':'PRINTLN','int':'INT','bool':'BOOL','var':'VAR','fun':'FUN','if':'IF','else':'ELSE','while':'WHILE','return':'RETURN'}
-    double_char = {'==':'EQ', '<=':'LTEQ', '>=':'GTEQ', '!=':'NOTEQ', '&&':'AND', '||':'OR'}
-    single_char = {'=':'ASSIGN','<':'LT', '>':'GT', '!':'NOT', '+':'PLUS', '-':'MINUS', '/':'DIVIDE', '*':'TIMES', '%':'MOD','(':'LPAREN',')':'RPAREN', '{':'BEGIN', '}':'END', ';':'SEMICOLON', ':':'COLON', ',':'COMMA'}
+    keywords    = {'true':'BOOLVAL','false':'BOOLVAL','print':'PRINT','println':'PRINT','int':'INT','bool':'BOOL','var':'VAR','fun':'FUN','if':'IF','else':'ELSE','while':'WHILE','return':'RETURN'}
+    double_char = {'==':'COMP', '<=':'COMP', '>=':'COMP', '!=':'COMP', '&&':'AND', '||':'OR'}
+    single_char = {'=':'ASSIGN','<':'COMP', '>':'COMP', '!':'NOT', '+':'PLUS', '-':'MINUS', '/':'DIVIDE', '*':'TIMES', '%':'MOD','(':'LPAREN',')':'RPAREN', '{':'BEGIN', '}':'END', ';':'SEMICOLON', ':':'COLON', ',':'COMMA'}
     tokens      = {'ID':'', 'STRING':'', 'INTVAL':''} | { v:'' for k, v in keywords.items() | double_char.items() | single_char.items() }
 
     def tokenize(self, text):

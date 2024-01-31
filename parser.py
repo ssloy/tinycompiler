@@ -9,7 +9,7 @@ class WendParser(Parser):
          ('left', OR),
          ('left', AND),
          ('right', NOT),
-         ('nonassoc', LT, LTEQ, GT, GTEQ, EQ, NOTEQ),
+         ('nonassoc', COMP),
          ('left', PLUS, MINUS),
          ('left', TIMES, DIVIDE, MOD),
          ('right', UMINUS), # unary operators
@@ -69,8 +69,7 @@ class WendParser(Parser):
     def statement_list_optional(self, p):
         return []
 
-    @_('PRINT   expr SEMICOLON',
-       'PRINTLN expr SEMICOLON')
+    @_('PRINT expr SEMICOLON')
     def statement(self, p):
         return Print(p.expr, p[0]=='println', {'lineno':p.lineno})
 
@@ -107,12 +106,7 @@ class WendParser(Parser):
     def expr(self, p):
         return ArithOp(p[1], p.expr0, p.expr1, {'lineno':p.lineno})
 
-    @_('expr LT expr',
-       'expr LTEQ expr',
-       'expr GT expr',
-       'expr GTEQ expr',
-       'expr EQ expr',
-       'expr NOTEQ expr',
+    @_('expr COMP expr',
        'expr AND expr',
        'expr OR expr')
     def expr(self, p):
