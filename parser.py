@@ -140,7 +140,7 @@ class WendParser(Parser):
     def expr(self, p):
         return Boolean(p.BOOLVAL=='true', {'lineno':p.lineno})
 
-    @_('INT', 'BOOL')
+    @_('TYPE')
     def type(self, p):
         return Type.INT if p[0]=='int' else Type.BOOL
 
