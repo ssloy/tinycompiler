@@ -3,7 +3,9 @@ from lexer import WendLexer
 from syntree import *
 
 class WendParser(Parser):
-    tokens = WendLexer.tokens
+#    tokens = WendLexer.tokens
+    tokens = {'ID':'', 'BOOLVAL':'', 'INTVAL':'', 'STRING':'', 'PRINT':'', 'PRINTLN':'', 'INT':'', 'BOOL':'', 'VAR':'', 'FUN':'', 'IF':'', 'ELSE':'', 'WHILE':'', 'RETURN':'', 'PLUS':'', 'MINUS':'', 'TIMES':'', 'DIVIDE':'', 'MOD':'', 'LTEQ':'', 'LT':'', 'GTEQ':'', 'GT':'', 'EQ':'', 'NOTEQ':'', 'AND':'', 'OR':'', 'NOT':'', 'LPAREN':'', 'RPAREN':'', 'BEGIN':'', 'END':'', 'ASSIGN':'', 'SEMICOLON':'', 'COLON':'', 'COMMA':''}
+
     precedence = ( # arithmetic operators take precedence over logical operators
          ('left', OR),
          ('left', AND),
