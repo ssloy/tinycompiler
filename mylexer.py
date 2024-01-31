@@ -17,13 +17,14 @@ class State:
     NUMBER  = 4
 
 def tokenize(text):
-    lineno, idx = 0, 0
-    accum = ''
-    state = State.START
+    kwd    = {'true':'BOOLVAL','false':'BOOLVAL','print':'PRINT','println':'PRINTLN','int':'INT','bool':'BOOL','var':'VAR','fun':'FUN','if':'IF','else':'ELSE','while':'WHILE','return':'RETURN'}
+    double = {'==':'EQ', '<=':'LTEQ', '>=':'GTEQ', '!=':'NOTEQ', '&&':'AND', '||':'OR'}
+    single = {'=':'ASSIGN','<':'LT', '>':'GT', '!':'NOT', '+':'PLUS', '-':'MINUS', '/':'DIVIDE', '*':'TIMES', '%':'MOD','(':'LPAREN',')':'RPAREN', '{':'BEGIN', '}':'END', ';':'SEMICOLON', ':':'COLON', ',':'COMMA'}
+
+    lineno, idx, accum, state = 0, 0, '', State.START
     while idx<len(text):
         sym1 = text[idx+0] if idx<len(text)-0 else ' '
         sym2 = text[idx+1] if idx<len(text)-1 else ' '
-#            print(sym1, sym2)
         if sym1 == '\n':
             lineno += 1
         if state==State.START:
@@ -37,60 +38,11 @@ def tokenize(text):
                 accum += sym1
             elif sym1 == '"':
                 state = State.STRING
-            elif sym1 == '=':
-                if sym2 == '=':
-                    yield Token('EQ', '==', lineno)
-                    idx += 1
-                else:
-                    yield Token('ASSIGN', '=', lineno)
-            elif sym1 == '<':
-                if sym2 == '=':
-                    yield Token('LTEQ', '<=', lineno)
-                    idx += 1
-                else:
-                    yield Token('LT', '<', lineno)
-            elif sym1 == '>':
-                if sym2 == '=':
-                    yield Token('GTEQ', '>=', lineno)
-                    idx += 1
-                else:
-                    yield Token('GT', '>', lineno)
-            elif sym1 == '!':
-                if sym2 == '=':
-                    yield Token('NOTEQ', '!=', lineno)
-                    idx += 1
-                else:
-                    yield Token('NOT', '!', lineno)
-            elif sym1 == '&' and sym2 == '&':
-                yield Token('AND', '&&', lineno)
+            elif sym1 + sym2 in double:
+                yield Token(double[sym1+sym2], sym1+sym2, lineno)
                 idx += 1
-            elif sym1 == '|' and sym2 == '|':
-                yield Token('OR', '||', lineno)
-                idx += 1
-            elif sym1 == '+':
-                yield Token('PLUS', '+', lineno)
-            elif sym1 == '-':
-                yield Token('MINUS', '-', lineno)
-            elif sym1 == '/':
-                yield Token('DIVIDE', '/', lineno)
-            elif sym1 == '*':
-                yield Token('TIMES', '*', lineno)
-            elif sym1 == '%':
-                yield Token('MOD', '%', lineno)
-            elif sym1 == '(':
-                yield Token('LPAREN', '(', lineno)
-            elif sym1 == ')':
-                yield Token('RPAREN', ')', lineno)
-            elif sym1 == '{':
-                yield Token('BEGIN', '{', lineno)
-            elif sym1 == '}':
-                yield Token('END', '}', lineno)
-            elif sym1 == ';':
-                yield Token('SEMICOLON', ';', lineno)
-            elif sym1 == ':':
-                yield Token('COLON', ':', lineno)
-            elif sym1 == ',':
-                yield Token('COMMA', ',', lineno)
+            elif sym1 in single:
+                yield Token(single[sym1], sym1, lineno)
         elif state==State.COMMENT:
             if sym2 == '\n':
                 state = State.START
@@ -98,7 +50,6 @@ def tokenize(text):
             if sym1.isalpha() or sym1=='_' or  sym1.isdigit():
                 accum += sym1
             else:
-                kwd = {'true':'BOOLVAL','false':'BOOLVAL','print':'PRINT','println':'PRINTLN','int':'INT','bool':'BOOL','var':'VAR','fun':'FUN','if':'IF','else':'ELSE','while':'WHILE','return':'RETURN'}
                 if accum in kwd:
                     yield Token(kwd[accum], accum, lineno)
                 else:
