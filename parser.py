@@ -69,11 +69,6 @@ class WendParser(Parser):
     def statement_list_optional(self, p):
         return []
 
-    @_('PRINT   STRING SEMICOLON', # TODO: put string into expr
-       'PRINTLN STRING SEMICOLON')
-    def statement(self, p):
-        return Print(String(p[1]), p[0]=='println', {'lineno':p.lineno})
-
     @_('PRINT   expr SEMICOLON',
        'PRINTLN expr SEMICOLON')
     def statement(self, p):
@@ -138,6 +133,10 @@ class WendParser(Parser):
     @_('expr { COMMA expr }')
     def args(self, p):
         return [p.expr0] + p.expr1
+
+    @_('STRING')
+    def expr(self, p):
+        return String(p[0], {'lineno':p.lineno})
 
     @_('INTVAL')
     def expr(self, p):
