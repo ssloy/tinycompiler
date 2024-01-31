@@ -4,6 +4,7 @@ from syntree import *
 
 class WendParser(Parser):
     tokens = WendLexer.tokens
+
     precedence = ( # arithmetic operators take precedence over logical operators
          ('left', OR),
          ('left', AND),
