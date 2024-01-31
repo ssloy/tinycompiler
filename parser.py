@@ -1,5 +1,5 @@
 from sly import Parser
-from mylexer import WendLexer
+from lexer import WendLexer
 from syntree import *
 
 class WendParser(Parser):
