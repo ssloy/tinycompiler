@@ -37,23 +37,23 @@ class IfThenElse:
 # expressions
 class ArithOp:
     def __init__(self, op, left, right, deco=None):
-        self.op, self.left, self.right, self.deco = op, left, right, deco or {}
+        self.op, self.left, self.right, self.deco = op, left, right, (deco or {}) | {'type':Type.INT}
 
 class LogicOp:
     def __init__(self, op, left, right, deco=None):
-        self.op, self.left, self.right, self.deco = op, left, right, deco or {}
+        self.op, self.left, self.right, self.deco = op, left, right, (deco or {}) | {'type':Type.BOOL}
 
 class Integer:
     def __init__(self, value, deco=None):
-        self.value, self.deco = value, deco or {}
+        self.value, self.deco = value, (deco or {}) | {'type':Type.INT}
 
 class Boolean:
     def __init__(self, value, deco=None):
-        self.value, self.deco = value, deco or {}
+        self.value, self.deco = value, (deco or {}) | {'type':Type.BOOL}
 
 class String:
     def __init__(self, value, deco=None):
-        self.value, self.deco = value, deco or {}
+        self.value, self.deco = value, (deco or {}) | {'type':Type.STRING}
 
 class Var:
     def __init__(self, name, deco=None):

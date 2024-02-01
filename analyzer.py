@@ -72,23 +72,17 @@ def process_stat(n, symtable): # process "statement" syntax tree nodes
 
 def process_expr(n, symtable): # process "expression" syntax tree nodes
     if isinstance(n, ArithOp):
-        n.deco['type'] = Type.INT
         process_expr(n.left,  symtable)
         process_expr(n.right, symtable)
         if n.left.deco['type'] != Type.INT or n.right.deco['type'] != Type.INT:
             raise Exception('Arithmetic operation over non-integer type in line %s', n.deco['lineno'])
     elif isinstance(n, LogicOp):
-        n.deco['type'] = Type.BOOL
         process_expr(n.left,  symtable)
         process_expr(n.right, symtable)
         if (n.left.deco['type'] != n.right.deco['type']) or \
            (n.op in ['<=', '<', '>=', '>'] and n.left.deco['type'] != Type.INT) or \
            (n.op in ['&&', '||'] and n.left.deco['type'] != Type.BOOL):
             raise Exception('Boolean operation over incompatible types in line %s', n.deco['lineno'])
-    elif isinstance(n, Integer): # no type checking is necessary
-        n.deco['type'] = Type.INT
-    elif isinstance(n, Boolean): # no type checking is necessary
-        n.deco['type'] = Type.BOOL
     elif isinstance(n, Var):     # no type checking is necessary
         deco = symtable.find_var(n.name)
         n.deco['type']   = deco['type']
@@ -102,10 +96,9 @@ def process_expr(n, symtable): # process "expression" syntax tree nodes
         n.deco['fundeco'] = deco # save the function symbol, useful for overloading and for stack preparation
         n.deco['type']    = deco['type']
     elif isinstance(n, String): # no type checking is necessary
-        n.deco['type']  = Type.STRING
         n.deco['label'] = LabelFactory.new_label() # unique label for assembly code
         symtable.ret_stack[1]['strings'].append((n.deco['label'], n.value))
-    else:
+    elif not isinstance(n, Integer) and not isinstance(n, Boolean): # no type checking is necessary
         raise Exception('Unknown expression type', n)
 
 def update_nonlocals(var, symtable):                    # add the variable name to the set of nonlocals
