@@ -4,6 +4,7 @@ from syntree import *
 
 class WendParser(Parser):
     tokens = WendLexer.tokens
+    debugfile = 'parser.out'
 
     precedence = ( # arithmetic operators take precedence over logical operators
          ('left', OR),
@@ -33,9 +34,9 @@ class WendParser(Parser):
     def param(self, p):
         return (p[0], {'type':p.type, 'lineno':p.lineno})
 
-    @_('BEGIN [ var_list ] [ fun_list ] [ statement_list ] END')
+    @_('BEGIN [ var_list ] [ fun_list ] statement_list_optional END')
     def fun_body(self, p):
-        return [p.var_list or [], p.fun_list or [], p.statement_list or []]
+        return [p.var_list or [], p.fun_list or [], p.statement_list_optional or []]
 
     @_('var { var }')
     def var_list(self, p):
@@ -53,13 +54,13 @@ class WendParser(Parser):
     def statement_list(self, p):
         return [p.statement0] + p.statement1
 
-    @_('WHILE expr BEGIN [ statement_list ] END')
+    @_('WHILE expr BEGIN statement_list_optional END')
     def statement(self, p):
-        return While(p.expr, p.statement_list or [], {'lineno':p.lineno})
+        return While(p.expr, p.statement_list_optional or [], {'lineno':p.lineno})
 
-    @_('IF expr BEGIN [ statement_list ] END [ ELSE BEGIN statement_list_optional END ]')
+    @_('IF expr BEGIN statement_list_optional END [ ELSE BEGIN statement_list_optional END ]')
     def statement(self, p):
-        return IfThenElse(p.expr, p.statement_list or [], p.statement_list_optional or [], {'lineno':p.lineno})
+        return IfThenElse(p.expr, p.statement_list_optional0 or [], p.statement_list_optional1 or [], {'lineno':p.lineno})
 
     @_('statement_list')                  # sly does not support nested
     def statement_list_optional(self, p): # optional targets, therefore
