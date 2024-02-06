@@ -34,7 +34,7 @@ grammar = [
 #   ('expr', ['expr', 'TIMES', 'expr']),
 #   ('expr', ['expr', 'MINUS', 'expr']),
 #   ('expr', ['expr', 'PLUS', 'expr']),
-    ('expr', ['LPAREN', 'expr', 'RPAREN']),
+#   ('expr', ['LPAREN', 'expr', 'RPAREN']),
 #   ('expr', ['PLUS', 'expr']),
 #   ('expr', ['MINUS', 'expr']),
     ('arg_list', ['expr']),
@@ -84,7 +84,10 @@ first = first()
 print('\n')
 print(border_msg('First terminals'))
 for lhs in first.keys():
-    print('{} → ( {} ) ...'.format(lhs or '⊤', " | ".join(first[lhs])))
+    if len(first[lhs])>1:
+        print('{} → ( {} ) ...'.format(lhs or '⊤', " | ".join(first[lhs])))
+    else:
+        print('{} → {} ...'.format(lhs or '⊤', *list(first[lhs])))
 
 def follow(): # for each nonterminal, compute a set of terminals that can immediately follow that nonterminal
     follow = { lhs:set() for lhs, rhs in grammar }
@@ -105,7 +108,12 @@ print('\n')
 print(border_msg('Follow terminals'))
 follow = follow()
 for lhs in follow.keys():
-    print('{} ( {} ) ...'.format(lhs or '⊤', " | ".join(follow[lhs])))
+    if len(follow[lhs])>1:
+        print('{} ( {} ) ...'.format(lhs or '⊤', " | ".join(follow[lhs])))
+    elif len(follow[lhs]):
+        print('{} {} ...'.format(lhs or '⊤', *list(follow[lhs])))
+    else:
+        print('{} {}'.format(lhs or '⊤', u'\u2205'))
 
 #print(follow)
 
