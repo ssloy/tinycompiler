@@ -1,13 +1,12 @@
 grammar = [
     (None, ['fun']),
-    ('fun', ['FUN', 'ID', 'LPAREN', 'param_list', 'RPAREN', 'type_optional', 'BEGIN', 'var_list', 'fun_list', 'statement_list', 'END']),
-    ('param_list', ['param']),
+    ('fun', ['FUN', 'ID', 'LPAREN', 'param_list', 'RPAREN', 'fun_type', 'BEGIN', 'var_list', 'fun_list', 'statement_list', 'END']),
+    ('param_list', ['var']),
     ('param_list', []),
-    ('param_list', ['param_list', 'COMMA', 'param']),
-    ('param', ['ID', 'COLON', 'TYPE']),
+    ('param_list', ['param_list', 'COMMA', 'var']),
     ('var_list', []),
-    ('var_list', ['var_list', 'var']),
-    ('var', ['VAR', 'ID', 'COLON', 'TYPE', 'SEMICOLON']),
+    ('var_list', ['var_list', 'VAR', 'var', 'SEMICOLON']),
+    ('var', ['ID', 'COLON', 'TYPE']),
     ('fun_list', []),
     ('fun_list', ['fun_list', 'fun']),
     ('statement_list', []),
@@ -41,8 +40,8 @@ grammar = [
     ('arg_list', ['expr']),
     ('arg_list', []),
     ('arg_list', ['arg_list', 'COMMA', 'expr']),
-    ('type_optional', []),
-    ('type_optional', ['COLON', 'TYPE'])
+    ('fun_type', []),
+    ('fun_type', ['COLON', 'TYPE'])
     ]
 
 tokens = ['AND', 'ASSIGN', 'BEGIN', 'BOOLVAL', 'COLON', 'COMMA', 'COMP', 'DIVIDE', 'ELSE', 'END', 'FUN', 'ID', 'IF', 'INTVAL', 'LPAREN', 'MINUS', 'MOD', 'NOT', 'OR', 'PLUS', 'PRINT', 'RETURN', 'RPAREN', 'SEMICOLON', 'STRING', 'TIMES', 'TYPE', 'VAR', 'WHILE']
