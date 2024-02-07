@@ -69,17 +69,29 @@ class WendParser(Parser):
     def statement(self, p):
         return While(p.expr, p.statement_list or [], {'lineno':p.lineno})
 
-    @_('IF expr BEGIN statement_list END [ ELSE BEGIN statement_list END ]')
+    @_('IF expr BEGIN statement_list END else_statement')
     def statement(self, p):
-        return IfThenElse(p.expr, p.statement_list0 or [], p.statement_list1 or [], {'lineno':p.lineno})
+        return IfThenElse(p.expr, p.statement_list or [], p.else_statement or [], {'lineno':p.lineno})
+
+    @_('')
+    def else_statement(self, p):
+        return []
+
+    @_('ELSE BEGIN statement_list END')
+    def else_statement(self, p):
+        return p.statement_list
 
     @_('PRINT expr SEMICOLON')
     def statement(self, p):
         return Print(p.expr, p[0]=='println', {'lineno':p.lineno})
 
-    @_('RETURN [ expr ] SEMICOLON')
+    @_('RETURN SEMICOLON')
     def statement(self, p):
-        return Return(p.expr or None, {'lineno':p.lineno})
+        return Return(None, {'lineno':p.lineno})
+
+    @_('RETURN expr SEMICOLON')
+    def statement(self, p):
+        return Return(p.expr, {'lineno':p.lineno})
 
     @_('ID ASSIGN expr SEMICOLON')
     def statement(self, p):
