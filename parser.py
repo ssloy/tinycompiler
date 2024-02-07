@@ -17,27 +17,23 @@ class WendParser(Parser):
          ('right', UPLUS)
     )
 
-    @_('FUN ID LPAREN param_list RPAREN type_optional BEGIN var_list fun_list statement_list END')
+    @_('FUN ID LPAREN param_list RPAREN fun_type BEGIN var_list fun_list statement_list END')
     def fun(self, p):
-        return Function(p[1], p.param_list or [], p.var_list or [],  p.fun_list or [], p.statement_list or [], {'type':p.type_optional})
+        return Function(p[1], p.param_list or [], p.var_list or [],  p.fun_list or [], p.statement_list or [], {'type':p.fun_type})
 
-    @_('param_list COMMA param')
+    @_('param_list COMMA var')
     def param_list(self, p):
-        return p.param_list + [ p.param ]
+        return p.param_list + [ p.var ]
 
     @_('')
     def param_list(self, p):
         return [ ]
 
-    @_('param')
+    @_('var')
     def param_list(self, p):
-        return [ p.param ]
+        return [ p.var ]
 
-    @_('ID COLON TYPE')
-    def param(self, p):
-        return (p[0], {'type':Type.INT if p[2]=='int' else Type.BOOL, 'lineno':p.lineno})
-
-    @_('var_list var')
+    @_('var_list VAR var SEMICOLON')
     def var_list(self, p):
         return p.var_list + [p.var]
 
@@ -45,9 +41,9 @@ class WendParser(Parser):
     def var_list(self, p):
         return []
 
-    @_('VAR ID COLON TYPE SEMICOLON')
+    @_('ID COLON TYPE')
     def var(self, p):
-        return (p[1], {'type':Type.INT if p[3]=='int' else Type.BOOL, 'lineno':p.lineno})
+        return (p[0], {'type':Type.INT if p[2]=='int' else Type.BOOL, 'lineno':p.lineno})
 
     @_('fun_list fun')
     def fun_list(self, p):
@@ -97,9 +93,9 @@ class WendParser(Parser):
     def statement(self, p):
         return Assign(p[0], p.expr, {'lineno':p.lineno})
 
-    @_('ID LPAREN args RPAREN SEMICOLON')
+    @_('ID LPAREN arg_list RPAREN SEMICOLON')
     def statement(self, p):
-        return FunCall(p[0], p.args or [], {'lineno':p.lineno})
+        return FunCall(p[0], p.arg_list or [], {'lineno':p.lineno})
 
     @_('MINUS expr %prec UMINUS')
     def expr(self, p):
@@ -132,20 +128,20 @@ class WendParser(Parser):
     def expr(self, p):
         return Var(p[0], {'lineno':p.lineno})
 
-    @_('ID LPAREN args RPAREN')
+    @_('ID LPAREN arg_list RPAREN')
     def expr(self, p):
-        return FunCall(p[0], p.args or [], {'lineno':p.lineno})
+        return FunCall(p[0], p.arg_list or [], {'lineno':p.lineno})
 
-    @_('args COMMA expr')
-    def args(self, p):
-        return p.args + [ p.expr ]
+    @_('arg_list COMMA expr')
+    def arg_list(self, p):
+        return p.arg_list + [ p.expr ]
 
     @_('')
-    def args(self, p):
+    def arg_list(self, p):
         return []
 
     @_('expr')
-    def args(self, p):
+    def arg_list(self, p):
         return [ p.expr ]
 
     @_('STRING')
@@ -161,11 +157,11 @@ class WendParser(Parser):
         return Boolean(p.BOOLVAL=='true', {'lineno':p.lineno})
 
     @_('COLON TYPE')
-    def type_optional(self, p):
+    def fun_type(self, p):
         return Type.INT if p[1]=='int' else Type.BOOL
 
     @_('')
-    def type_optional(self, p):
+    def fun_type(self, p):
         return Type.VOID
 
     def error(self, token):
