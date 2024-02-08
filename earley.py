@@ -48,8 +48,8 @@ print(nullable)
 
 
 class EarleyItem:
-    def __init__(self, index_of_rule_in_grammar, index_of_symbol_in_rule, start_position_in_input):
-        self.rule, self.next, self.start = index_of_rule_in_grammar, index_of_symbol_in_rule, start_position_in_input
+    def __init__(self, index_of_rule_in_grammar, index_of_symbol_in_rule, start_position_in_input, prev_item = None):
+        self.rule, self.next, self.start, self.prev = index_of_rule_in_grammar, index_of_symbol_in_rule, start_position_in_input, prev_item
 
     def __repr__(self):
         lhs, rhs = grammar[self.rule]
@@ -59,10 +59,10 @@ class EarleyItem:
         return grammar[self.rule][1][self.next] if self.next<len(grammar[self.rule][1]) else None
 
     def advance(self):
-        return EarleyItem(self.rule, self.next+1, self.start)
+        return EarleyItem(self.rule, self.next+1, self.start, self)
 
     def __eq__(self, other):
-        return self.rule == other.rule and self.next == other.next and self.start == other.start
+        return self.rule == other.rule and self.next == other.next and self.start == other.start #NB no self.prev
 
 tokenize = iter('FUN ID LPAREN RPAREN BEGIN PRINT INTEGER PLUS INTEGER TIMES INTEGER SEMICOLON END'.split(' '))
 #tokenize = iter('INTEGER PLUS INTEGER TIMES INTEGER'.split(' '))
@@ -79,27 +79,37 @@ while True:
                 if item.next_symbol() == grammar[S[i][j].rule][0]:
                     if item.advance() not in S[i]:
                         S[i].append(item.advance())
+                        S[i][-1].prev = S[i][j]
         elif symbol in tokens: # scan
             if symbol == token:
                 if len(S)==i+1: S.append([])
                 S[i+1].append(S[i][j].advance())
+#                S[i+1][-1].prev = S[i][j]
         else:                  # predict
             for idx, (lhs, rhs) in enumerate(grammar):
                 if lhs == symbol:
-                    newitem = EarleyItem(idx, 0, i)
+                    newitem = EarleyItem(idx, 0, i, S[i][j])
                     if newitem not in S[i]:
                         S[i].append(newitem)
-                    if lhs in nullable: # Aycock and Horspool (2002): when performing a prediction, if the predicted symbol is nullable, then advance the predictor one step.
-                        if S[i][j].advance() not in S[i]:
-                            S[i].append(S[i][j].advance())
+#                   if lhs in nullable: # Aycock and Horspool (2002): when performing a prediction, if the predicted symbol is nullable, then advance the predictor one step.
+#                       if S[i][j].advance() not in S[i]:
+#                           S[i].append(S[i][j].advance())
+#                           S[i][-1].prev = S[i][S[i].index(newitem)]
         j += 1
     i += 1
     if token is None or len(S)==i: break
 
-print('\n')
-print(border_msg('Earley charts'))
-for _ in S:
-    print(_)
+#print('\n')
+#print(border_msg('Earley charts'))
+#for _ in S:
+#    print(_)
+
+print()
+prev = next((_ for _ in S[-1] if _ == EarleyItem(0,len(grammar[0][1]),0)), None)
+while prev:
+    if prev.next_symbol() is None:
+        print(prev)
+    prev = prev.prev
 
 
 '''
