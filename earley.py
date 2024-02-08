@@ -1,62 +1,33 @@
-grammar = [
-    (None, ['fun']), # None is the start symbol of the grammar
-    ('fun', ['FUN', 'ID', 'LPAREN', 'param_list', 'RPAREN', 'fun_type', 'BEGIN', 'var_list', 'fun_list', 'statement_list', 'END']),
-    ('param_list', []),
-    ('param_list', ['var']),
-    ('param_list', ['param_list', 'COMMA', 'var']),
-    ('var_list', []),
-    ('var_list', ['var_list', 'VAR', 'var', 'SEMICOLON']),
-    ('var', ['ID', 'COLON', 'TYPE']),
-    ('fun_list', []),
-    ('fun_list', ['fun_list', 'fun']),
-    ('statement_list', []),
-    ('statement_list', ['statement_list', 'statement']),
-    ('statement', ['ID', 'LPAREN', 'arg_list', 'RPAREN', 'SEMICOLON']),
-    ('statement', ['ID', 'ASSIGN', 'expr', 'SEMICOLON']),
-    ('statement', ['RETURN', 'expr', 'SEMICOLON']),
-    ('statement', ['RETURN', 'SEMICOLON']),
-    ('statement', ['PRINT', 'expr', 'SEMICOLON']),
-    ('statement', ['IF', 'expr', 'BEGIN', 'statement_list', 'END', 'else_statement']),
-    ('statement', ['WHILE', 'expr', 'BEGIN', 'statement_list', 'END']),
-    ('else_statement', []),
-    ('else_statement', ['ELSE', 'BEGIN', 'statement_list', 'END']),
-    ('expr', ['BOOLVAL']),
-    ('expr', ['INTVAL']),
-    ('expr', ['STRING']),
-    ('expr', ['ID', 'LPAREN', 'arg_list', 'RPAREN']),
-    ('expr', ['ID']),
-    ('expr', ['NOT', 'expr']),
-    ('expr', ['expr', 'OR', 'expr']),
-    ('expr', ['expr', 'AND', 'expr']),
-    ('expr', ['expr', 'COMP', 'expr']),
-    ('expr', ['expr', 'MOD', 'expr']),
-    ('expr', ['expr', 'DIVIDE', 'expr']),
-    ('expr', ['expr', 'TIMES', 'expr']),
-    ('expr', ['expr', 'MINUS', 'expr']),
-    ('expr', ['expr', 'PLUS', 'expr']),
-    ('expr', ['LPAREN', 'expr', 'RPAREN']),
-    ('expr', ['PLUS', 'expr']),
-    ('expr', ['MINUS', 'expr']),
-    ('arg_list', []),
-    ('arg_list', ['expr']),
-    ('arg_list', ['arg_list', 'COMMA', 'expr']),
-    ('fun_type', []),
-    ('fun_type', ['COLON', 'TYPE'])
-    ]
-grammar = [
-    (None, ['expr']), # None is the start symbol of the grammar
-    ('expr', ['INTVAL']),
-    ('expr', ['expr', 'TIMES', 'expr']),
-    ('expr', ['expr', 'PLUS', 'expr']),
-    ]
+grammar = '''fun ::= FUN ID LPAREN param_list RPAREN fun_type BEGIN var_list fun_list statement_list END
+             var ::= ID COLON TYPE
+      param_list ::= param_list COMMA var|var|
+        fun_type ::= COLON TYPE|
+        var_list ::= var_list VAR var SEMICOLON|
+        fun_list ::= fun_list fun|
+  statement_list ::= statement_list statement|
+       statement ::= ID LPAREN arg_list RPAREN SEMICOLON|ID ASSIGN expr SEMICOLON|RETURN expr SEMICOLON|RETURN SEMICOLON|PRINT expr SEMICOLON|IF expr BEGIN statement_list END else_statement|WHILE expr BEGIN statement_list END
+  else_statement ::= ELSE BEGIN statement_list END|
+        arg_list ::= expr|arg_list COMMA expr|
+            expr ::= conjunction|expr OR conjunction|STRING
+     conjunction ::= literal|conjunction AND literal
+         literal ::= comparand|NOT comparand
+       comparand ::= addend|addend COMP addend
+          addend ::= term|addend MINUS term|addend PLUS term
+            term ::= factor|term MOD factor|term DIVIDE factor|term TIMES factor
+          factor ::= atom|PLUS atom|MINUS atom
+            atom ::= BOOLEAN|INTEGER|ID LPAREN arg_list RPAREN|ID|LPAREN expr RPAREN'''
 
-tokens = ['AND', 'ASSIGN', 'BEGIN', 'BOOLVAL', 'COLON', 'COMMA', 'COMP', 'DIVIDE', 'ELSE', 'END', 'FUN', 'ID', 'IF', 'INTVAL', 'LPAREN', 'MINUS', 'MOD', 'NOT', 'OR', 'PLUS', 'PRINT', 'RETURN', 'RPAREN', 'SEMICOLON', 'STRING', 'TIMES', 'TYPE', 'VAR', 'WHILE']
+grammar = [ (rule.split('::=')[0].strip(), [x for x in production.split(' ') if x!='']) for rule in grammar.split('\n') for production in rule.split('::=')[1].strip().split('|') ]
+print(grammar)
+
+tokens = ['AND', 'ASSIGN', 'BEGIN', 'BOOLEAN', 'COLON', 'COMMA', 'COMP', 'DIVIDE', 'ELSE', 'END', 'FUN', 'ID', 'IF', 'INTEGER', 'LPAREN', 'MINUS', 'MOD', 'NOT', 'OR', 'PLUS', 'PRINT', 'RETURN', 'RPAREN', 'SEMICOLON', 'STRING', 'TIMES', 'TYPE', 'VAR', 'WHILE']
 
 def border_msg(msg):
     row = len(msg) + 2
     h = ''.join(['+'] + ['-' *row] + ['+'])
     result= h + '\n'"| "+msg+" |"'\n' + h
     return result
+
 
 print(border_msg('Grammar'))
 for lhs, rhs in grammar:
@@ -87,11 +58,14 @@ class EarleyItem:
     def next_symbol(self):
         return grammar[self.rule][1][self.next] if self.next<len(grammar[self.rule][1]) else None
 
+    def advance(self):
+        return EarleyItem(self.rule, self.next+1, self.start)
+
     def __eq__(self, other):
         return self.rule == other.rule and self.next == other.next and self.start == other.start
 
-#tokenize = iter('FUN ID LPAREN RPAREN BEGIN PRINT INTVAL PLUS INTVAL TIMES INTVAL SEMICOLON END'.split(' '))
-tokenize = iter('INTVAL PLUS INTVAL TIMES INTVAL'.split(' '))
+tokenize = iter('FUN ID LPAREN RPAREN BEGIN PRINT INTEGER PLUS INTEGER TIMES INTEGER SEMICOLON END'.split(' '))
+#tokenize = iter('INTEGER PLUS INTEGER TIMES INTEGER'.split(' '))
 
 S = [[EarleyItem(0, 0, 0)]]
 i = 0
@@ -103,13 +77,12 @@ while True:
         if symbol is None:     # complete
             for item in S[S[i][j].start]:
                 if item.next_symbol() == grammar[S[i][j].rule][0]:
-                    newitem = EarleyItem(item.rule, item.next+1, item.start)
-                    if newitem not in S[i]:
-                        S[i].append(newitem)
+                    if item.advance() not in S[i]:
+                        S[i].append(item.advance())
         elif symbol in tokens: # scan
             if symbol == token:
                 if len(S)==i+1: S.append([])
-                S[i+1].append(EarleyItem(S[i][j].rule, S[i][j].next+1, S[i][j].start))
+                S[i+1].append(S[i][j].advance())
         else:                  # predict
             for idx, (lhs, rhs) in enumerate(grammar):
                 if lhs == symbol:
@@ -117,9 +90,8 @@ while True:
                     if newitem not in S[i]:
                         S[i].append(newitem)
                     if lhs in nullable: # Aycock and Horspool (2002): when performing a prediction, if the predicted symbol is nullable, then advance the predictor one step.
-                        newitem = EarleyItem(S[i][j].rule, S[i][j].next+1, S[i][j].start)
-                        if newitem not in S[i]:
-                            S[i].append(newitem)
+                        if S[i][j].advance() not in S[i]:
+                            S[i].append(S[i][j].advance())
         j += 1
     i += 1
     if token is None or len(S)==i: break
@@ -190,3 +162,26 @@ for lhs in follow.keys():
 '''
 
 
+
+
+'''
+S -> FUN.
+FUN -> fun id lparen PARAM_LIST rparen FUN_TYPE begin VAR_LIST FUN_LIST STATEMENT_LIST end.
+VAR -> id colon type.
+PARAM_LIST -> PARAM_LIST comma VAR|VAR|.
+FUN_TYPE -> colon type|.
+VAR_LIST -> VAR_LIST var VAR semicolon|.
+FUN_LIST -> FUN_LIST FUN|.
+STATEMENT_LIST -> STATEMENT_LIST STATEMENT|.
+STATEMENT -> id lparen ARG_LIST rparen semicolon|id assign EXPR semicolon|return EXPR semicolon|return semicolon|print EXPR semicolon|if EXPR begin STATEMENT_LIST end ELSE_STATEMENT|while EXPR begin STATEMENT_LIST end.
+ELSE_STATEMENT -> else begin STATEMENT_LIST end|.
+ARG_LIST -> EXPR|ARG_LIST comma EXPR|.
+EXPR -> CONJUNCTION|EXPR or CONJUNCTION|string.
+CONJUNCTION -> LITERAL|CONJUNCTION and LITERAL.
+LITERAL -> COMPARAND|not COMPARAND.
+COMPARAND -> ADDEND|ADDEND comp ADDEND.
+ADDEND -> TERM|ADDEND minus TERM|ADDEND plus TERM.
+TERM -> FACTOR|TERM mod FACTOR|TERM divide FACTOR|TERM times FACTOR.
+FACTOR -> ATOM|plus ATOM|minus ATOM.
+ATOM -> BOOLEAN|INTEGER|id lparen ARG_LIST rparen|id|lparen EXPR rparen.
+'''

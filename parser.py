@@ -181,13 +181,13 @@ class WendParser(Parser):
     def atom(self, p):
         return FunCall(p[0], p.arg_list or [], {'lineno':p.lineno})
 
-    @_('INTVAL')
+    @_('INTEGER')
     def atom(self, p):
-        return Integer(int(p.INTVAL), {'lineno':p.lineno})
+        return Integer(int(p.INTEGER), {'lineno':p.lineno})
 
-    @_('BOOLVAL')
+    @_('BOOLEAN')
     def atom(self, p):
-        return Boolean(p.BOOLVAL=='true', {'lineno':p.lineno})
+        return Boolean(p.BOOLEAN=='true', {'lineno':p.lineno})
 
     def error(self, token):
         if not token:

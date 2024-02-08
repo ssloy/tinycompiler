@@ -7,10 +7,10 @@ class Token:
          return f'Token(type={self.type!r}, value={self.value!r}, lineno={self.lineno!r})'
 
 class WendLexer:
-    keywords    = {'true':'BOOLVAL','false':'BOOLVAL','print':'PRINT','println':'PRINT','int':'TYPE','bool':'TYPE','var':'VAR','fun':'FUN','if':'IF','else':'ELSE','while':'WHILE','return':'RETURN'}
+    keywords    = {'true':'BOOLEAN','false':'BOOLEAN','print':'PRINT','println':'PRINT','int':'TYPE','bool':'TYPE','var':'VAR','fun':'FUN','if':'IF','else':'ELSE','while':'WHILE','return':'RETURN'}
     double_char = {'==':'COMP', '<=':'COMP', '>=':'COMP', '!=':'COMP', '&&':'AND', '||':'OR'}
     single_char = {'=':'ASSIGN','<':'COMP', '>':'COMP', '!':'NOT', '+':'PLUS', '-':'MINUS', '/':'DIVIDE', '*':'TIMES', '%':'MOD','(':'LPAREN',')':'RPAREN', '{':'BEGIN', '}':'END', ';':'SEMICOLON', ':':'COLON', ',':'COMMA'}
-    tokens      = {'ID':'', 'STRING':'', 'INTVAL':''} | { v:'' for k, v in keywords.items() | double_char.items() | single_char.items() }
+    tokens      = {'ID':'', 'STRING':'', 'INTEGER':''} | { v:'' for k, v in keywords.items() | double_char.items() | single_char.items() }
 
     def tokenize(self, text):
         lineno, idx, state, accum = 0, 0, 0, ''
@@ -49,7 +49,7 @@ class WendLexer:
                 if sym1.isdigit():                                  # is next character a digit?
                     accum += sym1                                   # if yes, continue
                 else:
-                    yield Token('INTVAL', accum, lineno)            # otherwise, emit number token
+                    yield Token('INTEGER', accum, lineno)            # otherwise, emit number token
                     idx -= 1
                     state, accum = 0, '' # start new scan
             elif state==2:                                          # scanning a string, check next character
