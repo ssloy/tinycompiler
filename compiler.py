@@ -1,6 +1,6 @@
 import io, sys
 from lexer import WendLexer
-from parser import WendParser
+from earley import WendParser
 from analyzer import *
 from transasm import *
 
