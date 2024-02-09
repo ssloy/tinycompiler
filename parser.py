@@ -1,25 +1,22 @@
 from lexer import WendLexer
 from syntree import *
 
-class State:
-    def __init__(self, index_of_rule_in_grammar, index_of_symbol_in_rule, start_position_in_input, cur_pos = None, prev_item = None):
-        self.rule, self.next, self.start, self.cur, self.prev = index_of_rule_in_grammar, index_of_symbol_in_rule, start_position_in_input, cur_pos, prev_item
-
-    def __repr__(self):
-        lhs, rhs, _ = WendParser.grammar[self.rule]
-        return "({}:{}, {} → {})".format(self.start, self.cur, lhs or '⊤', ' '.join(rhs[:self.next] + ['∘'] + rhs[self.next:]))
+class ParseState:
+    def __init__(self, rule, dot, start, token = None, prev = None):
+        self.rule  = rule  # index of the parse rule in the grammar
+        self.dot   = dot   # index of next symbol in the rule (dot position)
+        self.start = start # we saw this many tokens when we started the rule
+        self.token = token # we saw this many tokens up to the current dot position   # these two members are not necessary for
+        self.prev  = prev  # parent parse state pointer                               # the recogninzer, but are handy to retrieve a parse path
 
     def next_symbol(self):
-        return WendParser.grammar[self.rule][1][self.next] if self.next<len(WendParser.grammar[self.rule][1]) else None
+        prod = WendParser.grammar[self.rule][1]
+        return prod[self.dot] if self.dot<len(prod) else None
 
     def __eq__(self, other):
-        return self.rule == other.rule and self.next == other.next and self.start == other.start # NB no self.prev, no self.cur
+        return self.rule == other.rule and self.dot == other.dot and self.start == other.start # NB no self.token, no self.prev
 
-def append(charts, i, state):
-    if len(charts)==i: charts.append([])
-    if state not in charts[i]: charts[i].append(state)
-
-class WendParser:
+class WendParser: # the grammar is a list of triplets (nonterminal, production rule, AST node constructor)
     grammar = [['fun',            ['FUN', 'ID', 'LPAREN', 'param_list', 'RPAREN', 'fun_type', 'BEGIN', 'var_list', 'fun_list', 'statement_list', 'END'],
                                                                                                       lambda p: Function(p[1].value, p[3], p[7], p[8], p[9], {'type':p[5], 'lineno':p[0].lineno})],
                ['var',            ['ID', 'COLON', 'TYPE'],                                            lambda p: (p[0].value, {'type':Type.INT if p[2].value=='int' else Type.BOOL, 'lineno':p[0].lineno})],
@@ -71,49 +68,57 @@ class WendParser:
                ['atom',           ['ID'],                                                             lambda p: Var(p[0].value, {'lineno':p[0].lineno})],
                ['atom',           ['LPAREN', 'expr', 'RPAREN'],                                       lambda p: p[1]]]
 
-    def parse(self, tokens):
-        charts, seen = [[State(0,0,0)]], []
-        while not seen or seen[-1]:          # until end of file
-            seen.append(next(tokens, None))  # keep all the tokens we encounter
-            pos, j = len(seen)-1, 0
-            while j < len(charts[pos]):      # iterate through all Earley items in current chart
-                state = charts[pos][j]
-                symbol = state.next_symbol() # next symbol in the production rule
-                if symbol is None:           # if no symbol: completed state
+    def recognize(self, tokens): # check the syntax
+        charts, self.seen = [[ParseState(0,0,0)]], []
+
+        def append(i, state):
+            if len(charts)==i: charts.append([])
+            if state not in charts[i]: charts[i].append(state)
+
+        while not self.seen or self.seen[-1]:    # fetch tokens one by one until end of file
+            self.seen.append(next(tokens, None)) # keep all the tokens we encounter
+            pos = len(self.seen)-1
+            i = 0
+            while i < len(charts[pos]):          # iterate through all Earley items in current chart
+                state  = charts[pos][i]
+                symbol = state.next_symbol()     # next symbol in the production rule
+                if symbol is None:               # if no symbol: completed state
                     for item in charts[state.start]:
                         if item.next_symbol() == self.grammar[state.rule][0]:
-                            append(charts, pos, State(item.rule, item.next+1, item.start, pos, state))
+                            append(pos, ParseState(item.rule, item.dot+1, item.start, pos, state))
                 elif symbol in WendLexer.tokens: # if next symbol is a terminal,
-                    if symbol == seen[-1].type:  # scan a token
-                        append(charts, pos+1, State(state.rule, state.next+1, state.start, pos+1, state))
-                else:                            # if next symbol is non-terminal, emit a prediction state
+                    if self.seen[-1] and symbol == self.seen[-1].type:  # scan a token
+                        append(pos+1, ParseState(state.rule, state.dot+1, state.start, pos+1, state))
+                else:                            # if next symbol is nonterminal, emit a prediction state
                     for idx, (lhs, rhs, _) in enumerate(self.grammar):
-                        if lhs == symbol:        # N. B.: it is possible to check whether the lookahead is in the "first" set to avoid emitting spurious predictions, but I do not care
-                            append(charts, pos, State(idx, 0, pos, pos, state))
-                j += 1
-            if seen[-1] and len(charts)==pos+1:
-                raise Exception(f'Syntax error at line {seen[-1].lineno}, token={seen[-1].type}')
+                        if lhs == symbol:
+                            append(pos, ParseState(idx, 0, pos, pos, state))
+                i += 1
+            if self.seen[-1] and len(charts)==pos+1:
+                raise Exception(f'Syntax error at line {self.seen[-1].lineno}, token={self.seen[-1].type}')
+        cur = [ state for state in charts[-1] if state == ParseState(0, len(self.grammar[0][1]), 0) ] # all completed states at the end of the parse
+        if not cur: # no final production rule found
+            raise Exception('Syntax error: unexpected EOF')
+        return cur[0]
 
-        cur = None
-        for state in charts[-1]: # find the final production rule
-            if state == State(0, len(self.grammar[0][1]), 0):
-                cur = state
+    def build_syntree(self, rule): # recover a parse path and build the syntax tree
+        production = []                    # the production sequence:
+        while rule:                        # rewind through the charts
+            if rule.next_symbol() is None: # keep completed rules only
+                production.append(rule)
+            rule = rule.prev
 
-        production = [] # find the parse path
-        while cur: # rewind through the charts
-            if cur.next_symbol() is None: # keep completed rules only
-                production.append(cur)
-            cur = cur.prev
+        stack, token = [], 0                # now apply production rules in order: build a stack from the input rules
+        for rule in reversed(production): # chomp and chew then according to the production rules, put one symbol back after each chomp
+            stack += self.seen[token:rule.token]
+            token = rule.token
+            chomp = len(self.grammar[rule.rule][1])        # number of symbols in the production rule
+            chew  = []
+            if chomp>0:                                    # chomp those symbols from the stack
+                chew = stack[-chomp:]
+                del stack[-chomp:]
+            stack.append(self.grammar[rule.rule][2](chew)) # put AST node back on the stack
+        return stack[0] # normally we have only one symbol left on the stack
 
-        stack = []
-        pos = 0
-        for rule in reversed(production):
-            stack = stack + seen[pos:rule.cur]
-            pos = rule.cur
-            nsym = len(self.grammar[rule.rule][1])
-            chew = []
-            if nsym>0: # chomp symbols from the stack
-                chew = stack[-nsym:]
-                del stack[-nsym:]
-            stack.append(self.grammar[rule.rule][2](chew)) # put one symbol back on the stack
-        return stack[0] # normally we have only one symbol on the stack
+    def parse(self, tokens):
+        return self.build_syntree( self.recognize(tokens) )

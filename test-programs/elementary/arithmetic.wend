@@ -1,0 +1,14 @@
+fun main() {
+    println +3 + 5 * -2;
+    println 3 - 4 * 5;
+    println 3 - 10 / 5;
+    println (-2+3*4)+5/(7-6)%8;
+    println 5<3;
+    println 3==3;
+    println 3 * (4 + 5) / 7 == 3;
+    println true && false;
+    println true && false || true;
+    println !true;
+    println 3<=3 && 3>=3;
+}
+

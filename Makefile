@@ -5,34 +5,38 @@ SHELL := bash
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
-BUILDDIR=build
-WENDDIR=test-data
-TESTS = $(patsubst $(WENDDIR)/%.wend, $(BUILDDIR)/%.wend, $(wildcard $(WENDDIR)/*.wend))
+BUILDDIR = build
+WENDDIR = test-programs
+TESTS = $(shell find $(WENDDIR) -name '*.wend' -not -path '*/gfx/*')
 
-GFXDIR=gfx
+GFXDIR = $(WENDDIR)/gfx
 GFXASM = $(patsubst $(GFXDIR)/%.wend, $(BUILDDIR)/%.s,   $(wildcard $(GFXDIR)/*.wend))
 GFXOBJ = $(patsubst $(GFXDIR)/%.wend, $(BUILDDIR)/%.o,   $(wildcard $(GFXDIR)/*.wend))
 GFXEXE = $(patsubst $(GFXDIR)/%.wend, $(BUILDDIR)/%.exe, $(wildcard $(GFXDIR)/*.wend))
 
-.PHONY: run clean
+.PHONY: all test clean
 
-run:
+all: test gfx
+
+$(BUILDDIR):
 	@mkdir -p $(BUILDDIR)
-	@cp -r $(WENDDIR)/* $(BUILDDIR)/
+
+test: $(BUILDDIR)
 	@for WEND in $(TESTS) ; do \
-		echo $$WEND ; \
+		SRCDIR=$$(dirname $$WEND) ; \
+		DSTDIR=$$(dirname $$WEND | sed s/$(WENDDIR)/$(BUILDDIR)/) ; \
+		mkdir -p $$DSTDIR ; \
+		echo -n Testing $$WEND... ;\
 		EXP=$$(echo $$WEND|sed s/\.wend/\.expected/) ; \
-		ASM=$$(echo $$WEND|sed s/\.wend/\.s/) ; \
-		OBJ=$$(echo $$WEND|sed s/\.wend/\.o/) ; \
-		ELF=$$(echo $$WEND|sed s/\.wend//) ; \
+		ASM=$$DSTDIR/$$(basename $$WEND|sed s/\.wend/\.s/) ; \
+		OBJ=$$DSTDIR/$$(basename $$WEND|sed s/\.wend/\.o/) ; \
+		ELF=$$DSTDIR/$$(basename $$WEND|sed s/\.wend//) ; \
 		python3 compiler.py $$WEND > $$ASM ; \
 		as --march=i386 --32 -gstabs -o $$OBJ $$ASM ; \
 		ld -m elf_i386 $$OBJ  -o $$ELF ; \
 		$$ELF | diff $$EXP - ; \
+		echo ' ok' ; \
 	done
-
-$(BUILDDIR):
-	@mkdir -p $(BUILDDIR)
 
 $(BUILDDIR)/%.exe: $(BUILDDIR)/%.o
 	ld -m elf_i386 $< -o $@
