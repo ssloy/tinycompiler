@@ -16,7 +16,7 @@ class ParseState:
     def __eq__(self, other):
         return self.rule == other.rule and self.dot == other.dot and self.start == other.start # NB no self.token, no self.prev
 
-class WendParser: # the grammar is a list of triplets (nonterminal, production rule, AST node constructor)
+class WendParser: # the grammar is a list of triplets [nonterminal, production rule, AST node constructor]
     grammar = [['fun',            ['FUN', 'ID', 'LPAREN', 'param_list', 'RPAREN', 'fun_type', 'BEGIN', 'var_list', 'fun_list', 'statement_list', 'END'],
                                                                                                       lambda p: Function(p[1].value, p[3], p[7], p[8], p[9], {'type':p[5], 'lineno':p[0].lineno})],
                ['var',            ['ID', 'COLON', 'TYPE'],                                            lambda p: (p[0].value, {'type':Type.INT if p[2].value=='int' else Type.BOOL, 'lineno':p[0].lineno})],

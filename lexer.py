@@ -1,7 +1,6 @@
 class Token:
     def __init__(self, t, v, l=None):
-        self.type, self.value, self.lineno = t, v, (l or 0) +1 # mwahaha, +1, sly, wtf? # TODO remove +1
-        self.index, self.end = None, None # TODO needed for sly, remove in the future
+        self.type, self.value, self.lineno = t, v, (l or 0)
 
     def __repr__(self):
          return f'Token(type={self.type!r}, value={self.value!r}, lineno={self.lineno!r})'
@@ -10,7 +9,7 @@ class WendLexer:
     keywords    = {'true':'BOOLEAN','false':'BOOLEAN','print':'PRINT','println':'PRINT','int':'TYPE','bool':'TYPE','var':'VAR','fun':'FUN','if':'IF','else':'ELSE','while':'WHILE','return':'RETURN'}
     double_char = {'==':'COMP', '<=':'COMP', '>=':'COMP', '!=':'COMP', '&&':'AND', '||':'OR'}
     single_char = {'=':'ASSIGN','<':'COMP', '>':'COMP', '!':'NOT', '+':'PLUS', '-':'MINUS', '/':'DIVIDE', '*':'TIMES', '%':'MOD','(':'LPAREN',')':'RPAREN', '{':'BEGIN', '}':'END', ';':'SEMICOLON', ':':'COLON', ',':'COMMA'}
-    tokens      = {'ID':'', 'STRING':'', 'INTEGER':''} | { v:'' for k, v in keywords.items() | double_char.items() | single_char.items() }
+    tokens      = {'ID', 'STRING', 'INTEGER'} | { v for k, v in keywords.items() | double_char.items() | single_char.items() }
 
     def tokenize(self, text):
         lineno, idx, state, accum = 0, 0, 0, ''
@@ -63,5 +62,5 @@ class WendLexer:
                 if state==1: # if comment, start new scan
                     state,accum = 0, ''
             idx += 1
-        if state!=0:
+        if state:
             raise Exception('Lexical error: unexpected EOF')
