@@ -1,0 +1,82 @@
+main() {
+    bool board0; bool board1; bool board2; bool board3; bool board4; bool board5; bool board6; bool board7; bool board8; bool board9; bool board10; bool board11; bool board12; bool board13; bool board14; bool board15; bool board16; bool board17; bool board18; bool board19; bool board20; bool board21; bool board22; bool board23; bool board24; bool board25; bool board26; bool board27; bool board28; bool board29; bool board30; bool board31; bool board32; bool board33; bool board34; bool board35; bool board36; bool board37; bool board38; bool board39; bool board40; bool board41; bool board42; bool board43; bool board44; bool board45; bool board46; bool board47; bool board48; bool board49; bool board50; bool board51; bool board52; bool board53; bool board54; bool board55; bool board56; bool board57; bool board58; bool board59; bool board60; bool board61; bool board62; bool board63; 
+    int i; int j;
+
+    // getter-setter for the board
+    bool board(int i) {
+        if i < 32 { if i < 16 { if i < 8 { if i < 4 { if i < 2 { if i < 1 { return board0; } else { return board1; }} else { if i < 3 { return board2; } else { return board3; }}} else { if i < 6 { if i < 5 { return board4; } else { return board5; }} else { if i < 7 { return board6; } else { return board7; }}}} else { if i < 12 { if i < 10 { if i < 9 { return board8; } else { return board9; }} else { if i < 11 { return board10; } else { return board11; }}} else { if i < 14 { if i < 13 { return board12; } else { return board13; }} else { if i < 15 { return board14; } else { return board15; }}}}} else { if i < 24 { if i < 20 { if i < 18 { if i < 17 { return board16; } else { return board17; }} else { if i < 19 { return board18; } else { return board19; }}} else { if i < 22 { if i < 21 { return board20; } else { return board21; }} else { if i < 23 { return board22; } else { return board23; }}}} else { if i < 28 { if i < 26 { if i < 25 { return board24; } else { return board25; }} else { if i < 27 { return board26; } else { return board27; }}} else { if i < 30 { if i < 29 { return board28; } else { return board29; }} else { if i < 31 { return board30; } else { return board31; }}}}}} else { if i < 48 { if i < 40 { if i < 36 { if i < 34 { if i < 33 { return board32; } else { return board33; }} else { if i < 35 { return board34; } else { return board35; }}} else { if i < 38 { if i < 37 { return board36; } else { return board37; }} else { if i < 39 { return board38; } else { return board39; }}}} else { if i < 44 { if i < 42 { if i < 41 { return board40; } else { return board41; }} else { if i < 43 { return board42; } else { return board43; }}} else { if i < 46 { if i < 45 { return board44; } else { return board45; }} else { if i < 47 { return board46; } else { return board47; }}}}} else { if i < 56 { if i < 52 { if i < 50 { if i < 49 { return board48; } else { return board49; }} else { if i < 51 { return board50; } else { return board51; }}} else { if i < 54 { if i < 53 { return board52; } else { return board53; }} else { if i < 55 { return board54; } else { return board55; }}}} else { if i < 60 { if i < 58 { if i < 57 { return board56; } else { return board57; }} else { if i < 59 { return board58; } else { return board59; }}} else { if i < 62 { if i < 61 { return board60; } else { return board61; }} else { if i < 63 { return board62; } else { return board63; }}}}}}
+    }
+
+    board(int i, bool v) {
+        if i < 32 { if i < 16 { if i < 8 { if i < 4 { if i < 2 { if i < 1 { board0 = v; } else { board1 = v; }} else { if i < 3 { board2 = v; } else { board3 = v; }}} else { if i < 6 { if i < 5 { board4 = v; } else { board5 = v; }} else { if i < 7 { board6 = v; } else { board7 = v; }}}} else { if i < 12 { if i < 10 { if i < 9 { board8 = v; } else { board9 = v; }} else { if i < 11 { board10 = v; } else { board11 = v; }}} else { if i < 14 { if i < 13 { board12 = v; } else { board13 = v; }} else { if i < 15 { board14 = v; } else { board15 = v; }}}}} else { if i < 24 { if i < 20 { if i < 18 { if i < 17 { board16 = v; } else { board17 = v; }} else { if i < 19 { board18 = v; } else { board19 = v; }}} else { if i < 22 { if i < 21 { board20 = v; } else { board21 = v; }} else { if i < 23 { board22 = v; } else { board23 = v; }}}} else { if i < 28 { if i < 26 { if i < 25 { board24 = v; } else { board25 = v; }} else { if i < 27 { board26 = v; } else { board27 = v; }}} else { if i < 30 { if i < 29 { board28 = v; } else { board29 = v; }} else { if i < 31 { board30 = v; } else { board31 = v; }}}}}} else { if i < 48 { if i < 40 { if i < 36 { if i < 34 { if i < 33 { board32 = v; } else { board33 = v; }} else { if i < 35 { board34 = v; } else { board35 = v; }}} else { if i < 38 { if i < 37 { board36 = v; } else { board37 = v; }} else { if i < 39 { board38 = v; } else { board39 = v; }}}} else { if i < 44 { if i < 42 { if i < 41 { board40 = v; } else { board41 = v; }} else { if i < 43 { board42 = v; } else { board43 = v; }}} else { if i < 46 { if i < 45 { board44 = v; } else { board45 = v; }} else { if i < 47 { board46 = v; } else { board47 = v; }}}}} else { if i < 56 { if i < 52 { if i < 50 { if i < 49 { board48 = v; } else { board49 = v; }} else { if i < 51 { board50 = v; } else { board51 = v; }}} else { if i < 54 { if i < 53 { board52 = v; } else { board53 = v; }} else { if i < 55 { board54 = v; } else { board55 = v; }}}} else { if i < 60 { if i < 58 { if i < 57 { board56 = v; } else { board57 = v; }} else { if i < 59 { board58 = v; } else { board59 = v; }}} else { if i < 62 { if i < 61 { board60 = v; } else { board61 = v; }} else { if i < 63 { board62 = v; } else { board63 = v; }}}}}}
+    }
+
+    bool valid_position(int row, int col) { // Is it safe to plase a queen in this position?
+        int r; int c;                       // The board is filled left-to-right (it contains col-1 queens),
+        c = 0;                              // so we need to check to the left of row,col position.
+        while c<col {                       // Moreover, no need to check col column.
+            if board(c+row*8) {
+                return false;
+            }
+            c = c + 1;
+        }
+        r = row; c = col;
+        while c>=0 && r>=0 {
+            if board(c+r*8) {
+                return false;
+            }
+            r = r - 1;
+            c = c - 1;
+        }
+        r = row; c = col;
+        while r<8 && c>=0 {
+            if board(c+r*8) {
+                return false;
+            }
+            r = r + 1;
+            c = c - 1;
+        }
+        return true;
+    }
+
+    bool solve(int col) { // Place a queen on the first column,
+        int row;          // then proceed to the next column and place
+        if col == 8 {     // a queen in the first safe row of that column.
+            return true;  // Rinse, repeat.
+        }
+        row = 0;
+        while row<8 {
+            if valid_position(row, col) {
+                board(col+row*8, true);
+                if solve(col+1) {
+                    return true;
+                }
+                board(col+row*8, false);
+            }
+            row = row + 1;
+        }
+        return false;
+    }
+
+    i = 0;
+    while i<64 {
+        board(i, false);
+        i = i + 1;
+    }
+    solve(0);
+    j = 0;
+    while j<8 {
+        i = 0;
+        while i<8 {
+            if board(i+j*8) {
+                print "Q";
+            } else {
+                print ".";
+            }
+            i = i + 1;
+        }
+        println "";
+        j = j + 1;
+    }
+}
+

@@ -50,4 +50,6 @@ $(BUILDDIR)/%.s: $(GFXDIR)/%.wend
 gfx: $(BUILDDIR) $(GFXASM) $(GFXOBJ) $(GFXEXE)
 
 clean:
-	@rm -rf $(BUILDDIR)
+	rm -rf $(BUILDDIR)
+	find . -type f -name *.pyc -delete
+	find . -type d -name __pycache__ -delete
