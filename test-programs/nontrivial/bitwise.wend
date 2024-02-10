@@ -1,5 +1,5 @@
-fun main() {
-    var i:int; var j:int;
+main() {
+    int i; int j;
 
 //            _   _ _____
 //      /\   | \ | |  __ \
@@ -8,9 +8,9 @@ fun main() {
 //   / ____ \| |\  | |__| |
 //  /_/    \_\_| \_|_____/
 
-    fun and(a:int, b:int) : int {
-        var result:int;
-        var pow:int;
+    int and(int a, int b) {
+        int result;
+        int pow;
 
         result = 0;
         if (a<0 && b<0) {
@@ -41,7 +41,7 @@ fun main() {
 //   / . \ |__| | | \ \
 //  /_/ \_\____/|_|  \_\
 
-    fun xor(a:int, b:int) : int {
+    int xor(int a, int b) {
         return a - and(a,b) +  b - and(a,b);
     }
 
@@ -52,7 +52,7 @@ fun main() {
 //  | |__| | | \ \
 //   \____/|_|  \_\
 
-    fun or(a:int, b:int) : int {
+    int or(int a, int b) {
         return xor(xor(a,b),and(a,b));
     }
 
@@ -63,7 +63,7 @@ fun main() {
 //  | |\  | |__| | | |
 //  |_| \_|\____/  |_|
 
-    fun not(a:int) : int {
+    int not(int a) {
         return -1 - a;
     }
 
@@ -76,9 +76,9 @@ fun main() {
 //  | |                      __/ | | |
 //  |_|                     |___/  |_|
 
-    fun padprint(a:int) {
-        var n:int;
-        var nspaces:int;
+    padprint(int a) {
+        int n;
+        int nspaces;
 
         n = a;
         nspaces = 16;
@@ -104,7 +104,7 @@ fun main() {
 //  | (_) | | ||  __/\__ \ |_  | (_| (_| \__ \  __/\__ \
 //   \___/   \__\___||___/\__|  \___\__,_|___/\___||___/
 
-    fun test(i:int) : int {
+    int test(int i) {
         if (i<4) {
             if (i<2) {
                 if (i<1) {

@@ -1,4 +1,4 @@
-fun main() {
+main() {
     println "hello //world";
 }
 

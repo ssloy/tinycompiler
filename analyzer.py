@@ -47,9 +47,7 @@ def process_stat(n, symtable): # process "statement" syntax tree nodes
         case Assign():
             process_expr(n.expr, symtable)
             deco = symtable.find_var(n.name)
-            n.deco['scope']  = deco['scope']
-            n.deco['offset'] = deco['offset']
-            n.deco['type'] = deco['type']
+            n.deco |= { 'scope':deco['scope'], 'offset':deco['offset'], 'type':deco['type'] }
             if n.deco['type'] != n.expr.deco['type']:
                 raise Exception('Incompatible types in assignment statement, line %s', n.deco['lineno'])
         case FunCall(): # no type checking is necessary
@@ -82,11 +80,9 @@ def process_expr(n, symtable): # process "expression" syntax tree nodes
                (n.op in ['<=', '<', '>=', '>'] and n.left.deco['type'] != Type.INT) or \
                (n.op in ['&&', '||'] and n.left.deco['type'] != Type.BOOL):
                 raise Exception('Boolean operation over incompatible types in line %s', n.deco['lineno'])
-        case Var():     # no type checking is necessary
+        case Var(): # no type checking is necessary
             deco = symtable.find_var(n.name)
-            n.deco['type']   = deco['type']
-            n.deco['scope']  = deco['scope']
-            n.deco['offset'] = deco['offset']
+            n.deco |= { 'scope':deco['scope'], 'offset':deco['offset'], 'type':deco['type'] }
         case FunCall():
             for s in n.args:
                 process_expr(s, symtable)

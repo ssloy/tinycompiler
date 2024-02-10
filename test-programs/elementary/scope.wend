@@ -1,8 +1,8 @@
-fun main() {
-    var x:int;
+main() {
+    int x;
 
-    fun f(y:int) {
-        fun g(y:int) {
+    f(int y) {
+        g(int y) {
             x = y + 1;
         }
 

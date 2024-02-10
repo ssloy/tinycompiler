@@ -2,11 +2,9 @@ templates = {
 'ascii' : '''{label}: .ascii "{string}"
 	{label}_len = . - {label}
 ''',
-
 'var' : '''	movl display+{scope}, %eax
 	movl -{variable}(%eax), %eax
 ''',
-
 'print_linebreak' : '''	pushl $10           # '\\n'
 	movl $4, %eax       # write system call
 	movl $1, %ebx       # stdout
@@ -15,14 +13,12 @@ templates = {
 	int  $0x80          # make system call
 	addl $4, %esp
 ''',
-
 'print_int' : '''{expr}
 	pushl %eax
 	call print_int32
 	addl $4, %esp
 {newline}
 ''',
-
 'print_string' : '''	movl $4, %eax
 	movl $1, %ebx
 	movl ${label}, %ecx
@@ -30,7 +26,6 @@ templates = {
 	int  $0x80
 {newline}
 ''',
-
 'print_bool' : '''{expr}
 	movl $truestr, %ecx
 	movl $truestr_len, %edx
@@ -43,14 +38,12 @@ templates = {
 	int  $0x80
 {newline}
 ''',
-
 'assign' : '''{expression}
 	pushl %eax
 	movl display+{scope}, %eax
 	popl %ebx
 	movl %ebx, -{variable}(%eax)
 ''',
-
 'ifthenelse' : '''{condition}
 	test %eax, %eax
 	jz {label1}
@@ -60,7 +53,6 @@ templates = {
 {ebody}
 {label2}:
 ''',
-
 'while' : '''{label1}:
 {condition}
 	test %eax, %eax
@@ -69,7 +61,6 @@ templates = {
 	jmp {label1}
 {label2}:
 ''',
-
 'funcall' : '''	pushl display+{scope}
 {allocargs}
 	subl ${varsize}, %esp
@@ -80,7 +71,6 @@ templates = {
 	addl $4, %esp
 	popl display+{scope}
 ''',
-
 'program' : '''.global _start
 	.data
 {strings}
@@ -128,5 +118,4 @@ print_int32:
 	int $0x80           # make system call
 	addl $20, %esp      # deallocate the buffer
 	ret
-'''
-}
+'''}

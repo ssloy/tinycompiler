@@ -17,15 +17,15 @@ class ParseState:
         return self.rule == other.rule and self.dot == other.dot and self.start == other.start # NB no self.token, no self.prev
 
 class WendParser: # the grammar is a list of triplets [nonterminal, production rule, AST node constructor]
-    grammar = [['fun',            ['FUN', 'ID', 'LPAREN', 'param_list', 'RPAREN', 'fun_type', 'BEGIN', 'var_list', 'fun_list', 'statement_list', 'END'],
-                                                                                                      lambda p: Function(p[1].value, p[3], p[7], p[8], p[9], {'type':p[5], 'lineno':p[0].lineno})],
-               ['var',            ['ID', 'COLON', 'TYPE'],                                            lambda p: (p[0].value, {'type':Type.INT if p[2].value=='int' else Type.BOOL, 'lineno':p[0].lineno})],
+    grammar = [['fun',            ['fun_type', 'ID', 'LPAREN', 'param_list', 'RPAREN', 'BEGIN', 'var_list', 'fun_list', 'statement_list', 'END'],
+                                                                                                      lambda p: Function(p[1].value, p[3], p[6], p[7], p[8], {'type':p[0], 'lineno':p[1].lineno})],
+               ['var',            ['TYPE', 'ID'],                                                     lambda p: (p[1].value, {'type':Type.INT if p[0].value=='int' else Type.BOOL, 'lineno':p[0].lineno})],
                ['param_list',     ['var'],                                                            lambda p: p],
                ['param_list',     [],                                                                 lambda p: p],
                ['param_list',     ['param_list', 'COMMA', 'var'],                                     lambda p: p[0] + [ p[2] ]],
-               ['fun_type',       ['COLON', 'TYPE'],                                                  lambda p: Type.INT if p[1].value=='int' else Type.BOOL],
+               ['fun_type',       ['TYPE'],                                                           lambda p: Type.INT if p[0].value=='int' else Type.BOOL],
                ['fun_type',       [],                                                                 lambda p: Type.VOID],
-               ['var_list',       ['var_list', 'VAR', 'var', 'SEMICOLON'],                            lambda p: p[0] + [ p[2] ]],
+               ['var_list',       ['var_list', 'var', 'SEMICOLON'],                                   lambda p: p[0] + [ p[1] ]],
                ['var_list',       [],                                                                 lambda p: p],
                ['fun_list',       ['fun_list', 'fun'],                                                lambda p: p[0] + [ p[1] ]],
                ['fun_list',       [],                                                                 lambda p: p],

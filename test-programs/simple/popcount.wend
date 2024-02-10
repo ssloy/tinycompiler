@@ -1,9 +1,9 @@
-fun main() {
-    var test:int;
+main() {
+    int test;
 
     // count number of set bits in binary representation of a positive integer n
-    fun popcount(n:int) : int {
-        var cnt:int;
+    int popcount(int n) {
+        int cnt;
 
         cnt = 0;
         while n > 0 {

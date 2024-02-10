@@ -1,15 +1,15 @@
-fun main() {
+main() {
 
     // This program outputs a decimal representation of a signed 32-bit fixed point number.
     // It prints the number one character at a time without ever printing an integer type expression,
     // like we would make it with aid of _write system call.
 
-    fun print_fixed_point(x:int, shift:int) {
-        var decpr:int;
-        var i:int;
+    print_fixed_point(int x, int shift) {
+        int decpr;
+        int i;
 
-        fun decpr(shift:int) : int { // number of meaningful digits after the decimal point
-            var decpr:int;
+        int decpr(int shift) { // number of meaningful digits after the decimal point
+            int decpr;
             decpr = 0;
             while shift>0 {
                 decpr = decpr + 1;
@@ -18,7 +18,7 @@ fun main() {
             return decpr;
         }
 
-        fun print_digit(d:int) {
+        print_digit(int d) {
             if d==0 {
                 print "0";
             } else {
@@ -53,7 +53,7 @@ fun main() {
                                                 }}}}}}}}}}
         }
 
-        fun print_integer(x:int) {
+        print_integer(int x) {
             if x>0 {
                 print_integer(x / 10);
                 print_digit(x % 10); // recursion to reverse the print

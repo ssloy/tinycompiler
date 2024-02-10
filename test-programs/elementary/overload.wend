@@ -1,13 +1,13 @@
-fun main() {
-    fun main(x:int) : int {
+main() {
+    int main(int x) {
         return x;
     }
 
-    fun main(x:int, y:int) : int {
+    int main(int x, int y) {
         return x + y;
     }
 
-    fun main(x:bool) : int {
+    int main(bool x) {
         if x {
             return 0;
         }

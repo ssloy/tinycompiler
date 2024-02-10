@@ -1,7 +1,7 @@
-fun main() {
-    var n:int;
+main() {
+    int n;
 
-    fun even(n:int) : bool {
+    bool even(int n) {
         if n == 0 {
             return true;
         } else {
@@ -9,7 +9,7 @@ fun main() {
         }
     }
 
-    fun odd(n:int) : bool {
+    bool odd(int n) {
         if n == 0 {
             return false;
         } else {
@@ -17,7 +17,7 @@ fun main() {
         }
     }
 
-    fun abs(n:int) : int {
+    int abs(int n) {
         if n < 0 {
             return -n;
         } else {

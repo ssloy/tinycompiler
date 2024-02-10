@@ -1,21 +1,21 @@
-fun main() {
+main() {
     // constants
-    var l:int;
-    var w:int;
-    var h:int;
-    var s:int;
+    int l;
+    int w;
+    int h;
+    int s;
 
     // variables
-    var x:int;
-    var y:int;
-    var r:int;
-    var v:int;
-    var d:int;
-    var e:int;
-    var a:int;
-    var z:int;
+    int x;
+    int y;
+    int r;
+    int v;
+    int d;
+    int e;
+    int a;
+    int z;
 
-    fun palette(i:int) {
+    palette(int i) {
         if (i==0)  { print "."; }
         if (i==1)  { print ","; }
         if (i==2)  { print "'"; }

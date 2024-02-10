@@ -1,11 +1,11 @@
-fun main() {
+main() {
     // square root of a fixed-point number
     // stored in a 32 bit integer variable, shift is the precision
 
-    fun sqrt(n:int, shift:int) : int {
-        var x:int;
-        var x_old:int;
-        var n_one:int;
+    int sqrt(int n, int shift) {
+        int x;
+        int x_old;
+        int n_one;
 
         if n > 65535 { // pay attention to potential overflows
             return 2 * sqrt(n / 4, shift);
@@ -21,7 +21,7 @@ fun main() {
         }
     }
 
-    fun abs(x:int) : int {
+    int abs(int x) {
         if x < 0 {
             return -x;
         } else {
