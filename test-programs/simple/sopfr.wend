@@ -1,0 +1,31 @@
+main() {
+
+    // Sum of prime factors (with repetition) of a number n.
+    // E.g., 40 factors as 2^3 * 5 and sopfr(40) = 2 * 3 + 5 = 11.
+    // It is also known as the integer logarithm.
+    // https://oeis.org/A001414
+
+    int sopfr(int n) {
+        int div;
+        int sopfr_aux(int n) {
+            int recursion;
+            recursion = 0;
+            if n % div == 0 {
+                recursion = div;
+                if n!=div {
+                    recursion = recursion + sopfr_aux(n/div);
+                }
+            } else {
+                div = div + 1;
+                recursion = sopfr_aux(n);
+            }
+            return recursion;
+        }
+
+        div = 2;
+        return sopfr_aux(n);
+    }
+
+    println sopfr(42);
+}
+
