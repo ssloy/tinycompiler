@@ -1,0 +1,54 @@
+main() {
+    int PI_2;    // pi/2 in fixed point precision
+    int pow2_24; // 2^24 precision
+
+    print_fixed_point(int x, int shift) {
+        int decpr;
+        int i;
+
+        print x / shift;
+        print ".";
+
+        decpr = 0;  // number of meaningful digits after the decimal point
+        i = shift;
+        while i>0 {
+            decpr = decpr + 1;
+            i = i / 10;
+        }
+
+        i = 0;
+        x = (x % shift) * 10;
+        while i<decpr {
+            print (x / shift) % 10;
+            x = (x % shift) * 10;
+            i = i + 1;
+        }
+        println "";
+    }
+
+    // sin(x) = x * (1 + x^2 * (0.00761 * x^2 - 0.16605))
+    // this formula works pretty well in the range [-pi/2, +pi/2]
+    int sin24(int x) {
+        int sign;
+        if x>0 { sign = 1; } else { sign = -1; x = -x; }     //
+        while x>+79060768 { x = x - 105414357; }             // reduce the argument to the acceptable range
+        if x>26353589 { return sign*cos24(x - 26353589); }   //
+        return sign*(x/4096)*((16777216 + (((x/4096)*(x/4096))/4096)*((((x/4096)*(x/4096))/131 - 2785856)/4096))/4096);
+    }
+
+    // cos(x) = 1 + x^2 * (0.03705 * x^2 - 0.49670))
+    // this formula works pretty well in the range [-pi/2, +pi/2]
+    int cos24(int x) {
+        if x<0 { x = -x; }                             //
+        while x>79060768 { x = x - 105414357; }        // reduce the argument to the acceptable range
+        if x>26353589 { return -sin24(x - 26353589); } //
+        return 16777216 + (((x/4096)*(x/4096))/4096)*((((x/4096)*(x/4096))/27 - 8333243)/4096);
+    }
+
+    PI_2 = 26353589;
+    pow2_24 = 16777216;
+    print "pi/2 approx ";      print_fixed_point(PI_2, pow2_24);
+    print "sin(pi/2) approx "; print_fixed_point(sin24(PI_2), pow2_24);
+    print "cos(pi/2) approx "; print_fixed_point(cos24(PI_2), pow2_24);
+}
+
