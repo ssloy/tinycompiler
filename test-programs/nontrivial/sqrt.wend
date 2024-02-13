@@ -7,7 +7,7 @@ main() {
         int x_old;
         int n_one;
 
-        if n > 65535 { // pay attention to potential overflows
+        if n > 2147483647/shift { // pay attention to potential overflows
             return 2 * sqrt(n / 4, shift);
         }
         x = shift; // initial guess 1.0, can do better, but oh well
