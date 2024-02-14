@@ -30,9 +30,9 @@ main() {
     // this formula works pretty well in the range [-pi/2, +pi/2]
     int sin24(int x) {
         int sign;
-        if x>0 { sign = 1; } else { sign = -1; x = -x; }     //
-        while x>+79060768 { x = x - 105414357; }             // reduce the argument to the acceptable range
-        if x>26353589 { return sign*cos24(x - 26353589); }   //
+        if x>0 { sign = 1; } else { sign = -1; x = -x; }    //
+        while x>+79060768 { x = x - 105414357; }            // reduce the argument to the acceptable range
+        if x>26353589 { return sign*sin24(52707179 - x); }  //
         return sign*(x/4096)*((16777216 + (((x/4096)*(x/4096))/4096)*((((x/4096)*(x/4096))/131 - 2785856)/4096))/4096);
     }
 

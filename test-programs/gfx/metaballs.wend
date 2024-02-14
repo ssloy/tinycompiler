@@ -31,6 +31,14 @@ main () {
         int x_old;
         int n_one;
 
+        int abs(int x) {
+            if x < 0 {
+                return -x;
+            } else {
+                return x;
+            }
+        }
+
         if n > 2147483647/shift { // pay attention to potential overflows
             return 2 * sqrt(n / 4, shift);
         }
@@ -42,14 +50,6 @@ main () {
             if abs(x - x_old) <= 1 {
                 return x;
             }
-        }
-    }
-
-    int abs(int x) {
-        if x < 0 {
-            return -x;
-        } else {
-            return x;
         }
     }
 
@@ -89,7 +89,7 @@ main () {
         fragColor_b = 255; if sdf<0 { fragColor_b = 0; }
         print CLAMP(fragColor_r,0,255); print ";";
         print CLAMP(fragColor_g,0,255); print ";";
-        print CLAMP(fragColor_b,0,255);
+        print fragColor_b;
     }
 
     POW2_24 = 16777216;

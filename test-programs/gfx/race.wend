@@ -1,0 +1,148 @@
+main () {
+    int POW2_24; // 2^24 precision
+    int WIDTH;
+    int HEIGHT;
+    int iTime;
+
+    int i; int j;
+    int fragColor_r; int fragColor_g; int fragColor_b;
+
+    int sin24(int x) {
+        int sign;
+        if (x>0) { sign = 1; } else { sign = -1; x = -x; }    //
+        while (x>79060768) { x = x - 105414357; }             // reduce the argument to the acceptable range
+        if (x>26353589) { return sign*sin24(52707179 - x); }  //
+        return sign*(x/4096)*((16777216 + (((x/4096)*(x/4096))/4096)*((((x/4096)*(x/4096))/131 - 2785856)/4096))/4096);
+    }
+
+    int mul24(int a, int b) {
+        return (a/4096)*(b/4096);
+    }
+
+    int div24(int a, int b) {
+        return (a/(b/4096))*4096;
+    }
+
+    mainImage(int fragCoord_x, int fragCoord_y) {
+        int u; int v;
+        int horizon;
+        int persp;
+
+        int t; int t3;
+        int x; int y;
+        bool band;
+
+        int CLAMP(int x, int low, int high) {
+            if x>high {
+                return high;
+            }
+            if x<low {
+                return low;
+            }
+            return x;
+        }
+
+        horizon = (POW2_24*3)/10;
+
+        u =  ((fragCoord_x - WIDTH /2)*POW2_24)/HEIGHT;
+        v = -((fragCoord_y - HEIGHT/2)*POW2_24)/HEIGHT;
+
+        if (v>horizon) {
+            fragColor_r = (255*((POW2_24-v)/4096))/4096; // sky
+            fragColor_g = 128;
+            fragColor_b = 178;
+        } else {
+            persp = div24(POW2_24, horizon + POW2_24/13 - v);
+            t = sin24(iTime/4);
+            t3 = mul24(mul24(t, t), t);
+            x = t3 + mul24(u, persp) - mul24(mul24(t3/10, persp), persp);
+            if (x>10*POW2_24 || x<-10*POW2_24) { // ugly hack to avoid overflow: if x is large, it is grass
+                fragColor_r = 0;
+                fragColor_g = 178;
+                fragColor_b = 0;
+            } else {
+                x = mul24(x, x);
+                y = 2*persp+ 20*iTime;
+                band = sin24(y)>0;
+                if (x>4*POW2_24) { // grass
+                    fragColor_r = 0;
+                    fragColor_g = 178;
+                    fragColor_b = 0;
+                } else {
+                    if (x>2*POW2_24) { // red-white curb
+                        if (band) {
+                            fragColor_r = 255;
+                            fragColor_g = 255;
+                            fragColor_b = 255;
+                        } else {
+                            fragColor_r = 255;
+                            fragColor_g = 0;
+                            fragColor_b = 0;
+                        }
+                    } else  { // road
+                        fragColor_r = 128;
+                        fragColor_g = 128;
+                        fragColor_b = 128; // asphalt
+                        if (x<POW2_24/66 && !band) { // central line
+                            fragColor_r = 255;
+                            fragColor_g = 255;
+                            fragColor_b = 255;
+                        }
+                    }
+                }
+            }
+            fragColor_r = CLAMP((fragColor_r*((POW2_24-v)/4096))/4096, 0, 255);
+            fragColor_g = CLAMP((fragColor_g*((POW2_24-v)/4096))/4096, 0, 255);
+            fragColor_b = CLAMP((fragColor_b*((POW2_24-v)/4096))/4096, 0, 255);
+        }
+
+    }
+
+    multisample(int fragCoord_x, int fragCoord_y) {
+        int accr; int accg; int accb;
+        int i;
+
+        accr = 0; accg = 0; accb = 0;
+        i = 0;
+        while i<4 {
+            mainImage(fragCoord_x+i%2, fragCoord_y+i/2);
+            accr = accr + fragColor_r;
+            accg = accg + fragColor_g;
+            accb = accb + fragColor_b;
+            i = i + 1;
+        }
+
+        print accr/4; print ";";
+        print accg/4; print ";";
+        print accb/4;
+    }
+
+
+    POW2_24 = 16777216;
+    WIDTH  = 80*2;
+    HEIGHT = 50*2;
+    iTime  = 0;
+    print "\033[2j\033[?25l"; // clear screen and hide cursor
+
+    while true {
+        print "\033[H"; // home
+        j = 0;
+        while j<HEIGHT/2 {
+            i = 0;
+            while i<WIDTH/2 {
+                print "\033[48;2;"; multisample(i*2, j*2  ); print "m";  // set background color
+                print "\033[38;2;"; multisample(i*2, j*2+2); print "m";  // set foreground color
+                print "\xE2\x96\x83";                              // half-block Unicode symbol
+                i = i + 1;
+            }
+            print "\033[49m\n";
+            j = j + 2;
+        }
+
+        iTime = iTime + POW2_24/24;
+        if iTime>POW2_24*100 { // 100 approx 32 pi :)
+            iTime = 0;
+        }
+    }
+}
+
