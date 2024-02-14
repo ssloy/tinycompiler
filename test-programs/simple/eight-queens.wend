@@ -14,15 +14,15 @@ main() {
     bool valid_position(int row, int col) { // Is it safe to plase a queen in this position?
         int r; int c;                       // The board is filled left-to-right (it contains col-1 queens),
         c = 0;                              // so we need to check to the left of row,col position.
-        while c<col {                       // Moreover, no need to check col column.
-            if board(c+row*8) {
+        while c<col {
+            if board(c+row*8) { // Check current row (no need to check col column).
                 return false;
             }
             c = c + 1;
         }
         r = row; c = col;
         while c>=0 && r>=0 {
-            if board(c+r*8) {
+            if board(c+r*8) {  // Check the diagonal.
                 return false;
             }
             r = r - 1;
@@ -30,7 +30,7 @@ main() {
         }
         r = row; c = col;
         while r<8 && c>=0 {
-            if board(c+r*8) {
+            if board(c+r*8) {  // Check the anti-diagonal.
                 return false;
             }
             r = r + 1;

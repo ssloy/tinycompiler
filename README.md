@@ -59,10 +59,19 @@ It is so dull to compute Fibonacci numbers, so here are more eyecandy examples f
 make gfx
 ```
 ### Mandelbrot set
-![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/mandelbrot.png)
+<img src="https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/mandelbrot.png" width="336">
 
 ### Zero-player breakout game
 ![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/breakout.gif)
 
 ### Fire
 ![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/fire6.gif)
+
+### Sunset race
+![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/sunset-race.gif)
+
+### Metaballs
+![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/metaballs.gif)
+
+
+
