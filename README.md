@@ -6,16 +6,16 @@ This repository, however, will contain more than the final code. It will tell yo
 
 So behold, here is a program that uses virtually all concepts in Wend:
 ```cpp
-fun main() {
+main() {
     // square root of a fixed-point number
     // stored in a 32 bit integer variable, shift is the precision
 
-    fun sqrt(n:int, shift:int) : int {
-        var x:int;
-        var x_old:int;
-        var n_one:int;
+    int sqrt(int n, int shift) {
+        int x;
+        int x_old;
+        int n_one;
 
-        if n > 65535 { // pay attention to potential overflows
+        if n > 2147483647/shift { // pay attention to potential overflows
             return 2 * sqrt(n / 4, shift);
         }
         x = shift; // initial guess 1.0, can do better, but oh well
@@ -29,7 +29,7 @@ fun main() {
         }
     }
 
-    fun abs(x:int) : int {
+    int abs(int x) {
         if x < 0 {
             return -x;
         } else {
@@ -50,11 +50,11 @@ And as usual, there will be a program with a raytracer :)
 
 ## run tests
 ```sh
-make run
+make test
 ```
 
 ## Graphics!
-It is so dull to compute Fibonacci numbers, so here are more eyecandy examples for our compiler,  check gfx/*.wend files.
+It is so dull to compute Fibonacci numbers, so here are more eyecandy examples for our compiler,  check test-programs/gfx/*.wend files.
 ```sh
 make gfx
 ```
