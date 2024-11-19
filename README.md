@@ -1,3 +1,5 @@
+> # N.B.: Under construction: I am happy with the code, but I need some time to write a series of articles explaining the things under the hood. It is highly likely that I'll extend the code to make the compiler optimising
+
 # tinycompiler - a 500-ish lines of code compiler in a weekend
 Have you ever wondered how a compiler works? If so, this project is for you.
 
