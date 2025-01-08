@@ -17,14 +17,12 @@ templates = {
 	pushl %eax
 	call print_int32
 	addl $4, %esp
-{newline}
 ''',
 'print_string' : '''	movl $4, %eax
 	movl $1, %ebx
 	movl ${label}, %ecx
 	movl ${label}_len, %edx
 	int  $0x80
-{newline}
 ''',
 'print_bool' : '''{expr}
 	movl $truestr, %ecx
@@ -36,7 +34,6 @@ templates = {
 0:	movl $4, %eax
 	movl $1, %ebx
 	int  $0x80
-{newline}
 ''',
 'assign' : '''{expression}
 	pushl %eax

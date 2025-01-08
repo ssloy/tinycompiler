@@ -52,7 +52,7 @@ class WendLexer:
                     idx -= 1
                     state, accum = 0, '' # start new scan
             elif state==2:                                          # scanning a string, check next character
-                if sym1 != '"':                                     # if not quote mark,
+                if sym1 != '"' or len(accum)>0 and accum[-1]=='\\': # if not quote mark (or if escaped quote mark),
                     accum += sym1                                   # continue the scan
                 else:
                     yield Token('STRING', accum, lineno)            # otherwise emit the token

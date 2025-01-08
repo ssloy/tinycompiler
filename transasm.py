@@ -20,15 +20,15 @@ def fun(n):
 def stat(n):
     match n:
         case Print():
-            newline = templates['print_linebreak'] if n.newline else ''
             match n.expr.deco['type']:
                 case Type.INT:
-                    return templates['print_int'].format(expr = expr(n.expr), newline = newline)
+                    asm = templates['print_int'].format(expr = expr(n.expr))
                 case Type.BOOL:
-                    return templates['print_bool'].format(expr = expr(n.expr), newline = newline)
+                    asm = templates['print_bool'].format(expr = expr(n.expr))
                 case Type.STRING:
-                    return templates['print_string'].format(label = n.expr.deco['label'], newline = newline)
+                    asm = templates['print_string'].format(label = n.expr.deco['label'])
                 case other: raise Exception('Unknown expression type', n.expr)
+            return asm + (templates['print_linebreak'] if n.newline else '')
         case Return():
             return (expr(n.expr) if n.expr is not None and n.expr.deco['type'] != Type.VOID else '') + '\tret\n'
         case Assign():

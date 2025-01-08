@@ -51,7 +51,7 @@ main() {
             d = 0;
             e = 0;
             a = -1;
-            while (a<l-1 && d*d+e*e<4*s*s) {
+            while (a<l && d*d+e*e<4*s*s) {
                 z = (d*d-e*e)/s+v;
                 e = (d+d)*e/s + r;
                 d = z;
