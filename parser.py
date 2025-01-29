@@ -101,15 +101,15 @@ class WendParser: # the grammar is a list of triplets [nonterminal, production r
             raise Exception('Syntax error: unexpected EOF')
         return cur[0]
 
-    def build_syntree(self, rule): # recover a parse path and build the syntax tree
+    def build_syntree(self, rule):         # recover a parse path and build the syntax tree
         production = []                    # the production sequence:
         while rule:                        # rewind through the charts
             if rule.next_symbol() is None: # keep completed rules only
                 production.append(rule)
             rule = rule.prev
 
-        stack, token = [], 0                # now apply production rules in order: build a stack from the input rules
-        for rule in reversed(production): # chomp and chew then according to the production rules, put one symbol back after each chomp
+        stack, token = [], 0               # now apply production rules in order: build a stack from the input rules
+        for rule in reversed(production):  # chomp and chew then according to the production rules, put one symbol back after each chomp
             stack += self.seen[token:rule.token]
             token = rule.token
             chomp = len(self.grammar[rule.rule][1])        # number of symbols in the production rule
