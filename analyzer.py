@@ -4,6 +4,8 @@ from symtable import *
 class LabelFactory: # this is a suffix to add to all function names
     counter = 0     # in particular, it is useful for function overloading
     @staticmethod   # it is also useful for different goto labels (loops, conditional statements etc) in assembly code
+    def cur_label():
+        return "uniqstr%d" % LabelFactory.counter
     def new_label():
         LabelFactory.counter += 1
         return "uniqstr%d" % LabelFactory.counter
