@@ -34,6 +34,13 @@ def stat(n):
 
 def expr(n): # convention: all expressions save their results to eax
     match n:
+        case ArithOp() | LogicOp():
+            e1, l1 = expr(n.left),  LabelFactory.cur_label()
+            e2, l2 = expr(n.right), LabelFactory.cur_label()
+            t = "i32" if n.left.deco['type']==Type.INT else "i1"
+            op = {'+':'add', '-':'sub', '*':'mul', '/':'sdiv', '%':'srem','||':'or', '&&':'and','<=':'icmp sle', '<':'icmp slt', '>=':'icmp sge', '>':'icmp sgt', '==':'icmp eq', '!=':'icmp ne'}
+            l = LabelFactory.new_label()
+            return f'\t{e1}\n\t{e2}\n\t%{l} = {op[n.op]} {t} %{l1}, %{l2}\n';
         case Integer():
             label = LabelFactory.new_label()
             return f'\t%{label} = add i32 0, {n.value}\n'
