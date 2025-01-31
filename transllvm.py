@@ -27,7 +27,7 @@ def stat(n):
                 case Type.STRING:
                     asm = templates['print_string'].format(label = n.expr.deco['label'])
                 case other: raise Exception('Unknown expression type', n.expr)
-            return asm + (templates['print_linebreak'] if n.newline else '')
+            return asm + (templates['print_newline'] if n.newline else '')
         case other: raise Exception('Unknown statement type', n)
 
 
