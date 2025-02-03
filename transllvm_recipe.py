@@ -13,13 +13,18 @@ define void @main() {{
 }}
 {functions}
 ''',
-'alloca' : '''	%{name} = alloca {vartype}
+'alloca1' : '''	%{name} = alloca {vartype}
+	store {vartype} %{name}.arg, {vartype}* %{name}
 ''',
-'function' : '''define {rettype} @{label}() {{
-{alloca}
+'alloca2' : '''	%{name} = alloca {vartype}
+''',
+'function' : '''define {rettype} @{label}({args}) {{
+{alloca1}
+{alloca2}
 {body}
 	{retval}
 }}
+{nested}
 ''',
 'ascii' : '''@{label} = constant [{size} x i8] c"{string}\\00"
 ''',
@@ -51,6 +56,7 @@ define void @main() {{
 {label2}.else:
 {ebody}	br label %{label2}.end
 {label2}.end:
-
+''',
+'return' : '''{expr}	ret {rettype} %{label}
 '''
 }
