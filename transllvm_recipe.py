@@ -13,7 +13,10 @@ define void @main() {{
 }}
 {functions}
 ''',
+'alloca' : '''	%{name} = alloca {vartype}
+''',
 'function' : '''define {rettype} @{label}() {{
+{alloca}
 {body}
 	{retval}
 }}
@@ -22,14 +25,32 @@ define void @main() {{
 ''',
 'print_newline' : '''	call i32 (i8*, ...) @printf(ptr @newline)
 ''',
-'printing' : '''	call i32 (i8*, ...) @printf(ptr @string, ptr @{label})
+'print_string' : '''	call i32 (i8*, ...) @printf(ptr @string, ptr @{label})
 ''',
 'print_bool' : '''{expr}
 	%{label}.offset = select i1 %{label}, i32 6, i32 0
 	%{label}.ptr = getelementptr [11 x i8], ptr @bool, i32 0, i32 %{label}.offset
 	call i32 (i8*, ...) @printf(ptr %{label}.ptr)
 ''',
-'print_int' : '''{expr}
-	call i32 (i8*, ...)* @printf(ptr @integer, i32 %{label})
+'print_int' : '''{expr}	call i32 (i8*, ...)* @printf(ptr @integer, i32 %{label})
 ''',
+'assign' : '''{expr}	store {vartype} %{label}, {vartype}* %{varname}
+''',
+'while' : '''	br label %{label2}.cond
+{label2}.cond:
+{expr}
+	br i1 %{label1}, label %{label2}.body, label %{label2}.end
+{label2}.body:
+{body}
+	br label %{label2}.cond
+{label2}.end:
+''',
+'ifthenelse' : '''{expr}	br i1 %{label1}, label %{label2}.then, label %{label2}.else
+{label2}.then:
+{ibody}	br label %{label2}.end
+{label2}.else:
+{ebody}	br label %{label2}.end
+{label2}.end:
+
+'''
 }
