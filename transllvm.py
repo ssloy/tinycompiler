@@ -5,7 +5,7 @@ from transllvm_recipe import templates
 def transllvm(n):
     strings = ''.join([templates['ascii'].format(label  = label,
                                                  size   = len(unescape(string))+1,
-                                                 string = llescape(string)
+                                                 string = llescape(unescape(string))
                                                  ) for label,string in n.deco['strings']])
     main         = n.deco['label']
     functions    = fun(n)
@@ -15,16 +15,17 @@ def lltype(t):
     return ['void', 'i32', 'i1'][t]
 
 def unescape(s):
-    return s.replace('\\n', '\n')
+    return s.replace('\\n', '\n').replace('\\033', '\033')
 
 def llescape(s):
-    return s.replace('\\n', '\\0A')  # TODO rest of it
+    return s.replace('\033', '\\1B').replace('\n', '\\0A')  # TODO rest of it
 
 def fun(n):
     label  = n.deco['label']
-    args = ', '.join([ '{t} %{n}.arg'.format(n = a[0], t = lltype(a[1]['type'])) for a in n.args ])
-    alloca1 = ''.join([templates['alloca1'].format(name=v[0], vartype=lltype(v[1]['type'])) for v in n.args])
-    alloca2 = ''.join([templates['alloca2'].format(name=v[0], vartype=lltype(v[1]['type'])) for v in n.var])
+    context = ''.join([ '{t}* %{n}, '.format(n = a[0], t = lltype(a[1])) for a in n.deco['nonlocal'] ])
+    args = ', '.join([ '{t} %{n}.arg'.format(n = a[0], t = lltype(a[1])) for a in n.args ])
+    alloca1 = ''.join([templates['alloca1'].format(name=v[0], vartype=lltype(v[1])) for v in n.args])
+    alloca2 = ''.join([templates['alloca2'].format(name=v[0], vartype=lltype(v[1])) for v in n.var])
     nested = ''.join([ fun(f) for f in n.fun ])
     rettype = lltype(n.deco['type'])
     retval = 'ret void' if n.deco['type']==Type.VOID else 'unreachable\n'
@@ -94,10 +95,11 @@ def expr(n): # convention: all expressions save their results to eax
                 arg_bodies += expr(e)
                 args.append(lltype(e.deco['type']) + ' %'+LabelFactory.cur_label())
             args =  ','.join(args)
+            context = ''.join([ '{t}* %{n}, '.format(n = a[0], t = lltype(a[1])) for a in n.deco['fundeco']['nonlocal'] ])
             label1 = n.deco['fundeco']['label']
             if n.deco['fundeco']['type']==Type.VOID:
-                return f'{arg_bodies}\tcall void @{label1}({args})\n'
+                return f'{arg_bodies}\tcall void @{label1}({context}{args})\n'
             label2 = LabelFactory.new_label()
             rettype = lltype(n.deco['fundeco']['type'])
-            return f'{arg_bodies}\t%{label2} = call {rettype} @{label1}({args})\n'
+            return f'{arg_bodies}\t%{label2} = call {rettype} @{label1}({context}{args})\n'
         case other: raise Exception('Unknown expression type', n)

@@ -18,18 +18,16 @@ def build_symtable(ast):
     ast.deco['label']   = ast.name + '_' + LabelFactory.new_label() # unique label
     ast.deco['strings'] = [] # collection of constant strings from the program
     process_scope(ast, symtable)
-    ast.deco['scope_cnt'] = symtable.scope_cnt # total number of functions, necessary for the static scope display table allocation
 
 def process_scope(fun, symtable):
-    fun.deco['local'] = []       # set of local variable names: len*4 is the memory necessary on the stack, the names are here to be put in comments
+    fun.deco['nonlocal'] = set() # set of nonlocal variable names in the function body
     symtable.push_scope(fun.deco)
     for v in fun.args: # process function arguments
         symtable.add_var(*v)
     for v in fun.var:  # process local variables
         symtable.add_var(*v)
-        fun.deco['local'].append(v[0])
     for f in fun.fun:  # process nested functions: first add function symbols to the table
-        symtable.add_fun(f.name, [d['type'] for v,d in f.args], f.deco)
+        symtable.add_fun(f.name, [t for v,t in f.args], f.deco)
         f.deco['label'] = f.name + '_' + LabelFactory.new_label() # still need unique labels
     for f in fun.fun:  # then process nested function bodies
         process_scope(f, symtable)
@@ -48,10 +46,8 @@ def process_stat(n, symtable): # process "statement" syntax tree nodes
                 raise Exception('Incompatible types in return statement, line %s', n.deco['lineno'])
         case Assign():
             process_expr(n.expr, symtable)
-            deco = symtable.find_var(n.name)
-            n.deco |= { 'scope':deco['scope'], 'offset':deco['offset'], 'type':deco['type'] }
-            if n.deco['type'] != n.expr.deco['type']:
-                raise Exception('Incompatible types in assignment statement, line %s', n.deco['lineno'])
+            n.deco['type'] = symtable.find_var(n.name)
+            update_nonlocals(n.name, n.deco['type'], symtable)
         case FunCall(): # no type checking is necessary
             process_expr(n, symtable)
         case While():
@@ -83,16 +79,30 @@ def process_expr(n, symtable): # process "expression" syntax tree nodes
                (n.op in ['&&', '||'] and n.left.deco['type'] != Type.BOOL):
                 raise Exception('Boolean operation over incompatible types in line %s', n.deco['lineno'])
         case Var(): # no type checking is necessary
-            deco = symtable.find_var(n.name)
-            n.deco |= { 'scope':deco['scope'], 'offset':deco['offset'], 'type':deco['type'] }
+            n.deco['type'] = symtable.find_var(n.name)
+            update_nonlocals(n.name, n.deco['type'], symtable)
         case FunCall():
             for s in n.args:
                 process_expr(s, symtable)
             deco = symtable.find_fun(n.name, [a.deco['type'] for a in n.args])
             n.deco['fundeco'] = deco # save the function symbol, useful for overloading and for stack preparation
             n.deco['type']    = deco['type']
+
+
+            if 'nonlocal' in n.deco['fundeco']:
+                for v,t in n.deco['fundeco']['nonlocal']:
+                    for i in reversed(range(len(symtable.variables))):     # for all the enclosing scopes until we find the instance
+                        if v in symtable.variables[i]: break
+                        symtable.ret_stack[i]['nonlocal'].add((v, t))
+
+
         case String(): # no type checking is necessary
             n.deco['label'] = LabelFactory.new_label() # unique label for assembly code
             symtable.ret_stack[1]['strings'].append((n.deco['label'], n.value))
         case Integer() | Boolean(): pass # no type checking is necessary
         case other: raise Exception('Unknown expression type', n)
+
+def update_nonlocals(name, vartype, symtable):             # add the variable name to the set of nonlocals
+    for i in reversed(range(len(symtable.variables))):     # for all the enclosing scopes until we find the instance
+        if name in symtable.variables[i]: break
+        symtable.ret_stack[i]['nonlocal'].add((name, vartype))

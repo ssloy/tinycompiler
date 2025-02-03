@@ -18,7 +18,7 @@ define i32 @main() {{
 ''',
 'alloca2' : '''	%{name} = alloca {vartype}
 ''',
-'function' : '''define {rettype} @{label}({args}) {{
+'function' : '''define {rettype} @{label}({context}{args}) {{
 {alloca1}
 {alloca2}
 {body}
