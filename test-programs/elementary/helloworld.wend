@@ -1,4 +1,23 @@
 main() {
+    int i;
+    int j;
+    int k;
+    a() {
+        c() {
+            b();
+            println k;
+        }
+
+        c();
+        println i;
+    }
+    b() {
+        println j;
+    }
+    i = 0;
+    j = 1;
+    k = 2;
+    a();
     println "hello //world";
 }
 
