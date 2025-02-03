@@ -22,8 +22,10 @@ def llescape(s):
 
 def fun(n):
     label  = n.deco['label']
-    context = ''.join([ '{t}* %{n}, '.format(n = a[0], t = lltype(a[1])) for a in n.deco['nonlocal'] ])
+    context = ', '.join([ '{t}* %{n}'.format(n = a[0], t = lltype(a[1])) for a in n.deco['nonlocal'] ])
     args = ', '.join([ '{t} %{n}.arg'.format(n = a[0], t = lltype(a[1])) for a in n.args ])
+    if args and context:
+        context += ', '
     alloca1 = ''.join([templates['alloca1'].format(name=v[0], vartype=lltype(v[1])) for v in n.args])
     alloca2 = ''.join([templates['alloca2'].format(name=v[0], vartype=lltype(v[1])) for v in n.var])
     nested = ''.join([ fun(f) for f in n.fun ])
@@ -95,7 +97,9 @@ def expr(n): # convention: all expressions save their results to eax
                 arg_bodies += expr(e)
                 args.append(lltype(e.deco['type']) + ' %'+LabelFactory.cur_label())
             args =  ','.join(args)
-            context = ''.join([ '{t}* %{n}, '.format(n = a[0], t = lltype(a[1])) for a in n.deco['fundeco']['nonlocal'] ])
+            context = ', '.join([ '{t}* %{n}'.format(n = a[0], t = lltype(a[1])) for a in n.deco['fundeco']['nonlocal'] ])
+            if args and context:
+                context += ', '
             label1 = n.deco['fundeco']['label']
             if n.deco['fundeco']['type']==Type.VOID:
                 return f'{arg_bodies}\tcall void @{label1}({context}{args})\n'
