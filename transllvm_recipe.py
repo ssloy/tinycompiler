@@ -7,9 +7,9 @@ templates = {
 @bool    = constant [11 x i8] c"false\\00true\\00"
 
 {strings}
-define void @main() {{
+define i32 @main() {{
 	call void @{main}()
-	ret void
+	ret i32 0
 }}
 {functions}
 ''',
