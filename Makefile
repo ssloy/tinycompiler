@@ -22,7 +22,7 @@ $(BUILDDIR):
 	@mkdir -p $(BUILDDIR)
 
 test: $(BUILDDIR)
-	for WEND in $(TESTS) ; do \
+	@for WEND in $(TESTS) ; do \
 		SRCDIR=$$(dirname $$WEND) ; \
 		DSTDIR=$$(dirname $$WEND | sed s/$(WENDDIR)/$(BUILDDIR)/) ; \
 		mkdir -p $$DSTDIR ; \

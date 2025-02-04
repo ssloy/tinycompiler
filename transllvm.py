@@ -2,9 +2,9 @@ from syntree import *
 from transllvm_recipe import templates
 
 def transllvm(n):
-    strings = ''.join([templates['ascii'].format(label  = label,
-                                                 size   = len(string)+1,
-                                                 string = ''.join(['\\%02x' % ord(x) for x in string])
+    strings = ''.join([templates['ascii'].format( label  = label,
+                                                  size   = len(string)+1,                               # +1 for null termination
+                                                  string = ''.join(['\\%02x' % ord(x) for x in string]) # hex escape the string
                                                  ) for label,string in n.deco['strings']])
     main         = n.deco['label']
     functions    = fun(n)
@@ -84,15 +84,10 @@ def expr(n): # TODO merge with stat(n)
             args = []
             for e in n.args:
                 arg_bodies += expr(e)
-                args.append(lltype(e.deco['type']) + ' %'+LabelFactory.cur_label())
-            args =  ','.join(args)
-            context = ', '.join([ '{t}* %{n}'.format(n = a[0], t = lltype(a[1])) for a in n.deco['fundeco']['nonlocal'] ])
-            if args and context:
-                context += ', '
-            label1 = n.deco['fundeco']['label']
-            if n.deco['fundeco']['type']==Type.VOID:
-                return f'{arg_bodies}\tcall void @{label1}({context}{args})\n'
-            label2 = LabelFactory.new_label()
+                args.append(lltype(e.deco['type']) + ' %' + LabelFactory.cur_label())
+            args = ', '.join([ '{t}* %{n}'.format(n = a[0], t = lltype(a[1])) for a in n.deco['fundeco']['nonlocal'] ] + args)
             rettype = lltype(n.deco['fundeco']['type'])
-            return f'{arg_bodies}\t%{label2} = call {rettype} @{label1}({context}{args})\n'
+            label1 = n.deco['fundeco']['label']
+            lvalue = '' if rettype=='void' else '%' + LabelFactory.new_label() + ' = '
+            return f'{arg_bodies}\t{lvalue}call {rettype} @{label1}({args})\n'
         case other: raise Exception('Unknown expression type', n)
