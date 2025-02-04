@@ -1,5 +1,4 @@
 from syntree import *
-from analyzer import LabelFactory
 from transllvm_recipe import templates
 
 def transllvm(n):

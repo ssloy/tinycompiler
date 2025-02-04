@@ -1,23 +1,14 @@
 from syntree import *
 from symtable import *
 
-class LabelFactory: # this is a suffix to add to all function names
-    counter = 0     # in particular, it is useful for function overloading
-    @staticmethod   # it is also useful for different goto labels (loops, conditional statements etc) in assembly code
-    def cur_label():
-        return "uniqstr%d" % LabelFactory.counter
-    def new_label():
-        LabelFactory.counter += 1
-        return "uniqstr%d" % LabelFactory.counter
-
 def build_symtable(ast):
     if not isinstance(ast, Function) or ast.name != 'main' or ast.deco['type'] != Type.VOID or len(ast.args)>0:
         raise Exception('Cannot find a valid entry point')
     symtable = SymbolTable()
     symtable.add_fun(ast.name, [], ast.deco)
-    ast.deco['label']   = ast.name + '_' + LabelFactory.new_label() # unique label
     ast.deco['strings'] = [] # collection of constant strings from the program
     process_scope(ast, symtable)
+    process_scope(ast, symtable) # TODO this is an ugly hack to propagate context
 
 def process_scope(fun, symtable):
     fun.deco['nonlocal'] = set() # set of nonlocal variable names in the function body
@@ -28,7 +19,6 @@ def process_scope(fun, symtable):
         symtable.add_var(*v)
     for f in fun.fun:  # process nested functions: first add function symbols to the table
         symtable.add_fun(f.name, [t for v,t in f.args], f.deco)
-        f.deco['label'] = f.name + '_' + LabelFactory.new_label() # still need unique labels
     for f in fun.fun:  # then process nested function bodies
         process_scope(f, symtable)
     for s in fun.body: # process the list of statements
@@ -97,7 +87,6 @@ def process_expr(n, symtable): # process "expression" syntax tree nodes
 
 
         case String(): # no type checking is necessary
-            n.deco['label'] = LabelFactory.new_label() # unique label for assembly code
             symtable.ret_stack[1]['strings'].append((n.deco['label'], n.value))
         case Integer() | Boolean(): pass # no type checking is necessary
         case other: raise Exception('Unknown expression type', n)
