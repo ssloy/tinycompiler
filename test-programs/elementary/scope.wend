@@ -1,6 +1,11 @@
 main() {
     int x;
 
+    h() {
+//      int x;
+        f(0);
+    }
+
     f(int y) {
         g(int y) {
             x = y + 1;
@@ -12,6 +17,8 @@ main() {
 
     x = 0;
     f(x + 1);
+    println x;
+    h();
     println x;
 }
 

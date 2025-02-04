@@ -3,8 +3,8 @@ from transllvm_recipe import templates
 
 def transllvm(n):
     strings = ''.join([templates['ascii'].format(label  = label,
-                                                 size   = len(unescape(string))+1,
-                                                 string = llescape(unescape(string))
+                                                 size   = len(string)+1,
+                                                 string = ''.join(['\\%02x' % ord(x) for x in string])
                                                  ) for label,string in n.deco['strings']])
     main         = n.deco['label']
     functions    = fun(n)
@@ -13,23 +13,15 @@ def transllvm(n):
 def lltype(t):
     return ['void', 'i32', 'i1'][t]
 
-def unescape(s):
-    return s.replace('\\n', '\n').replace('\\033', '\033')
-
-def llescape(s):
-    return s.replace('\033', '\\1B').replace('\n', '\\0A')  # TODO rest of it
-
 def fun(n):
     label  = n.deco['label']
-    context = ', '.join([ '{t}* %{n}'.format(n = a[0], t = lltype(a[1])) for a in n.deco['nonlocal'] ])
-    args = ', '.join([ '{t} %{n}.arg'.format(n = a[0], t = lltype(a[1])) for a in n.args ])
-    if args and context:
-        context += ', '
+    args    = ', '.join([ '{t}* %{n}'   .format(n = a[0], t = lltype(a[1])) for a in n.deco['nonlocal'] ] +
+                        [ '{t} %{n}.arg'.format(n = a[0], t = lltype(a[1])) for a in n.args ])
     alloca1 = ''.join([templates['alloca1'].format(name=v[0], vartype=lltype(v[1])) for v in n.args])
     alloca2 = ''.join([templates['alloca2'].format(name=v[0], vartype=lltype(v[1])) for v in n.var])
     nested = ''.join([ fun(f) for f in n.fun ])
     rettype = lltype(n.deco['type'])
-    retval = 'ret void' if n.deco['type']==Type.VOID else 'unreachable\n'
+    retval = '\tret void' if n.deco['type']==Type.VOID else '\tunreachable'
     body   = ''.join([stat(s) for s in n.body])
     return templates['function'].format(**locals())
 
@@ -68,9 +60,7 @@ def stat(n):
                                                   ebody  = ''.join([stat(s) for s in n.ebody]))
         case other: raise Exception('Unknown statement type', n)
 
-
-
-def expr(n): # convention: all expressions save their results to eax
+def expr(n): # TODO merge with stat(n)
     match n:
         case ArithOp() | LogicOp():
             e1, l1 = expr(n.left),  LabelFactory.cur_label()

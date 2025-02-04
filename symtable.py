@@ -13,7 +13,7 @@ class SymbolTable():
     def add_var(self, name, vartype):
         if name in self.variables[-1]:
             raise Exception('Double declaration of the variable %s' % name)
-        self.variables[-1][name] = vartype 
+        self.variables[-1][name] = vartype
 
     def push_scope(self, deco):
         self.variables.append({})

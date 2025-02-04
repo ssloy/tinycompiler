@@ -6,9 +6,9 @@ def build_symtable(ast):
         raise Exception('Cannot find a valid entry point')
     symtable = SymbolTable()
     symtable.add_fun(ast.name, [], ast.deco)
-    ast.deco['strings'] = [] # collection of constant strings from the program
+    ast.deco['strings'] = set()  # collection of constant strings from the program
     process_scope(ast, symtable)
-    process_scope(ast, symtable) # TODO this is an ugly hack to propagate context
+    process_scope(ast, symtable) # ugly hack to re-propagate variable references
 
 def process_scope(fun, symtable):
     fun.deco['nonlocal'] = set() # set of nonlocal variable names in the function body
@@ -30,7 +30,7 @@ def process_stat(n, symtable): # process "statement" syntax tree nodes
         case Print(): # no type checking is necessary
             process_expr(n.expr, symtable)
         case Return():
-            if n.expr is None: return
+            if n.expr is None: return # TODO semantic check for return; in non-void functions
             process_expr(n.expr, symtable)
             if symtable.ret_stack[-1]['type'] != n.expr.deco['type']:
                 raise Exception('Incompatible types in return statement, line %s', n.deco['lineno'])
@@ -87,7 +87,7 @@ def process_expr(n, symtable): # process "expression" syntax tree nodes
 
 
         case String(): # no type checking is necessary
-            symtable.ret_stack[1]['strings'].append((n.deco['label'], n.value))
+            symtable.ret_stack[1]['strings'].add((n.deco['label'], n.value))
         case Integer() | Boolean(): pass # no type checking is necessary
         case other: raise Exception('Unknown expression type', n)
 

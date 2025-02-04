@@ -1,7 +1,7 @@
 templates = {
 'program' : '''declare i32 @printf(i8*, ...)
 
-@newline = constant [ 2 x i8] c"\\0A\\00"
+@newline = constant [ 2 x i8] c"\\0a\\00"
 @integer = constant [ 3 x i8] c"%d\\00"
 @string  = constant [ 3 x i8] c"%s\\00"
 @bool    = constant [11 x i8] c"false\\00true\\00"
@@ -18,11 +18,8 @@ define i32 @main() {{
 ''',
 'alloca2' : '''	%{name} = alloca {vartype}
 ''',
-'function' : '''define {rettype} @{label}({context}{args}) {{
-{alloca1}
-{alloca2}
-{body}
-	{retval}
+'function' : '''define {rettype} @{label}({args}) {{
+{alloca1}{alloca2}{body}{retval}
 }}
 {nested}
 ''',
@@ -32,8 +29,7 @@ define i32 @main() {{
 ''',
 'print_string' : '''	call i32 (i8*, ...) @printf(ptr @string, ptr @{label})
 ''',
-'print_bool' : '''{expr}
-	%{label}.offset = select i1 %{label}, i32 6, i32 0
+'print_bool' : '''{expr}	%{label}.offset = select i1 %{label}, i32 6, i32 0
 	%{label}.ptr = getelementptr [11 x i8], ptr @bool, i32 0, i32 %{label}.offset
 	call i32 (i8*, ...) @printf(ptr %{label}.ptr)
 ''',
