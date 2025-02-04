@@ -2,7 +2,7 @@ main() {
     int x;
 
     h() {
-//      int x;
+        int x;
         f(0);
     }
 

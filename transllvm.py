@@ -14,15 +14,15 @@ def lltype(t):
     return ['void', 'i32', 'i1'][t]
 
 def fun(n):
-    label  = n.deco['label']
+    label   = n.deco['label']
     args    = ', '.join([ '{t}* %{n}'   .format(n = a[0], t = lltype(a[1])) for a in n.deco['nonlocal'] ] +
-                        [ '{t} %{n}.arg'.format(n = a[0], t = lltype(a[1])) for a in n.args ])
-    alloca1 = ''.join([templates['alloca1'].format(name=v[0], vartype=lltype(v[1])) for v in n.args])
-    alloca2 = ''.join([templates['alloca2'].format(name=v[0], vartype=lltype(v[1])) for v in n.var])
-    nested = ''.join([ fun(f) for f in n.fun ])
+                        [ '{t} %{n}.arg'.format(n = a.deco['fullname'], t = lltype(a.deco['type'])) for a in n.args ])
+    alloca1 = ''.join([templates['alloca1'].format(name=v.deco['fullname'], vartype=lltype(v.deco['type'])) for v in n.args])
+    alloca2 = ''.join([templates['alloca2'].format(name=v.deco['fullname'], vartype=lltype(v.deco['type'])) for v in n.var])
+    nested  = ''.join([ fun(f) for f in n.fun ])
     rettype = lltype(n.deco['type'])
-    retval = '\tret void' if n.deco['type']==Type.VOID else '\tunreachable'
-    body   = ''.join([stat(s) for s in n.body])
+    retval  = '\tret void' if n.deco['type']==Type.VOID else '\tunreachable'
+    body    = ''.join([stat(s) for s in n.body])
     return templates['function'].format(**locals())
 
 def stat(n):
@@ -30,41 +30,36 @@ def stat(n):
         case Print():
             match n.expr.deco['type']:
                 case Type.INT:
-                    asm = templates['print_int'].format(expr = expr(n.expr), label = LabelFactory.cur_label())
+                    asm = templates['print_int'].format(expr = stat(n.expr), label = LabelFactory.cur_label())
                 case Type.BOOL:
-                    asm = templates['print_bool'].format(expr = expr(n.expr), label = LabelFactory.cur_label())
+                    asm = templates['print_bool'].format(expr = stat(n.expr), label = LabelFactory.cur_label())
                 case Type.STRING:
                     asm = templates['print_string'].format(label = n.expr.deco['label'])
                 case other: raise Exception('Unknown expression type', n.expr)
             return asm + (templates['print_newline'] if n.newline else '')
         case Return():
-            return templates['return'].format(expr    = expr(n.expr) if n.expr else '',
+            return templates['return'].format(expr    = stat(n.expr) if n.expr else '',
                                               rettype = lltype(n.expr.deco['type']) if n.expr else 'void',
                                               label   = LabelFactory.cur_label() if n.expr else '')
         case Assign():
-            return templates['assign'].format(expr    = expr(n.expr),
+            return templates['assign'].format(expr    = stat(n.expr),
                                               label   = LabelFactory.cur_label(),
                                               vartype = lltype(n.deco['type']),
-                                              varname = n.name)
-        case FunCall(): return expr(n)
+                                              varname = n.deco['fullname'])
         case While():
-            return templates['while'].format(expr   = expr(n.expr),
+            return templates['while'].format(expr   = stat(n.expr),
                                              label1 = LabelFactory.cur_label(),
                                              label2 = LabelFactory.new_label(),
                                              body   = ''.join([stat(s) for s in n.body]))
         case IfThenElse():
-            return templates['ifthenelse'].format(expr   = expr(n.expr),
+            return templates['ifthenelse'].format(expr   = stat(n.expr),
                                                   label1 = LabelFactory.cur_label(),
                                                   label2 = LabelFactory.new_label(),
                                                   ibody  = ''.join([stat(s) for s in n.ibody]),
                                                   ebody  = ''.join([stat(s) for s in n.ebody]))
-        case other: raise Exception('Unknown statement type', n)
-
-def expr(n): # TODO merge with stat(n)
-    match n:
         case ArithOp() | LogicOp():
-            e1, l1 = expr(n.left),  LabelFactory.cur_label()
-            e2, l2 = expr(n.right), LabelFactory.cur_label()
+            e1, l1 = stat(n.left),  LabelFactory.cur_label()
+            e2, l2 = stat(n.right), LabelFactory.cur_label()
             t = lltype(n.left.deco['type'])
             op = {'+':'add', '-':'sub', '*':'mul', '/':'sdiv', '%':'srem','||':'or', '&&':'and','<=':'icmp sle', '<':'icmp slt', '>=':'icmp sge', '>':'icmp sgt', '==':'icmp eq', '!=':'icmp ne'}
             l = LabelFactory.new_label()
@@ -78,16 +73,16 @@ def expr(n): # TODO merge with stat(n)
         case Var():
             label = LabelFactory.new_label()
             vartype = 'i1' if n.deco['type']==Type.BOOL else 'i32'
-            return f'\t%{label} = load {vartype}, {vartype}* %{n.name}\n'
+            return f'\t%{label} = load {vartype}, {vartype}* %{n.deco["fullname"]}\n'
         case FunCall():
             arg_bodies = ''
             args = []
             for e in n.args:
-                arg_bodies += expr(e)
+                arg_bodies += stat(e)
                 args.append(lltype(e.deco['type']) + ' %' + LabelFactory.cur_label())
-            args = ', '.join([ '{t}* %{n}'.format(n = a[0], t = lltype(a[1])) for a in n.deco['fundeco']['nonlocal'] ] + args)
-            rettype = lltype(n.deco['fundeco']['type'])
-            label1 = n.deco['fundeco']['label']
+            args = ', '.join([ '{t}* %{n}'.format(n = a[0], t = lltype(a[1])) for a in n.deco['nonlocal'] ] + args)
+            rettype = lltype(n.deco['type'])
+            label1 = n.deco['label']
             lvalue = '' if rettype=='void' else '%' + LabelFactory.new_label() + ' = '
             return f'{arg_bodies}\t{lvalue}call {rettype} @{label1}({args})\n'
-        case other: raise Exception('Unknown expression type', n)
+        case other: raise Exception('Unknown instruction', n)

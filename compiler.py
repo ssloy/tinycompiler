@@ -7,11 +7,11 @@ from transllvm import *
 
 if len(sys.argv)!=2:
     sys.exit('Usage: compiler.py path/source.wend')
-if True:
+try:
     f = open(sys.argv[1], 'r')
     tokens = WendLexer().tokenize(f.read())
     ast = WendParser().parse(tokens)
-    build_symtable(ast)
+    decorate(ast)
     print(transllvm(ast))
-#except Exception as e:
-#    print(e)
+except Exception as e:
+    print(e)

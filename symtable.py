@@ -10,16 +10,17 @@ class SymbolTable():
             raise Exception('Double declaration of the function %s %s' % (signature[0], signature[1:]))
         self.functions[-1][signature] = deco
 
-    def add_var(self, name, vartype):
+    def add_var(self, name, deco):
         if name in self.variables[-1]:
             raise Exception('Double declaration of the variable %s' % name)
-        self.variables[-1][name] = vartype
+        self.variables[-1][name] = deco
+        deco['fullname'] = self.ret_stack[-1]['label'] + '.' + name
 
     def push_scope(self, deco):
+        deco['nonlocal'] = set() # set of nonlocal variable names in the function body
         self.variables.append({})
         self.functions.append({})
         self.ret_stack.append(deco)
-        self.var_cnt = 0 # reset the per scope variable counter
 
     def pop_scope(self):
         self.variables.pop()
@@ -27,14 +28,26 @@ class SymbolTable():
         self.ret_stack.pop()
 
     def find_var(self, name):
-        for i in reversed(range(len(self.variables))):
-            if name in self.variables[i]:
-                return self.variables[i][name]
-        raise Exception('No declaration for the variable %s' % name)
-
+        try:
+            for i in reversed(range(len(self.variables))): # find the variable symbol
+                if name in self.variables[i]: break
+            deco = self.variables[i][name]
+            for i in range(i+1, len(self.variables)):      # propagate the pointer to the current context
+                self.ret_stack[i]['nonlocal'].add((deco['fullname'], deco['type']))
+            return deco
+        except KeyError: raise Exception('No declaration for the variable %s' % name)
+        
     def find_fun(self, name, argtypes):
-        signature = (name, *argtypes)
-        for i in reversed(range(len(self.functions))):
-            if signature in self.functions[i]:
-                return self.functions[i][signature]
-        raise Exception('No declaration for the function %s' % signature[0], signature[1:])
+        try:
+            signature = (name, *argtypes)
+            for i in reversed(range(len(self.functions))): # find the function symbol
+                if signature in self.functions[i]: break
+            deco = self.functions[i][signature]
+            if 'nonlocal' in deco:                       # propagate context pointers to the function call
+                for fullname,t in deco['nonlocal']:
+                    label = fullname.partition('.')[0]
+                    for f in reversed(self.ret_stack):
+                        if f['label'] == label: break
+                        f['nonlocal'].add((fullname, t))
+            return deco
+        except KeyError: raise Exception('No declaration for the function %s' % signature[0], signature[1:])
