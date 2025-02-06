@@ -55,7 +55,8 @@ class BasicBlock:
         self.instructions  = []
         self.phi_functions = {} # map variable -> { Phi object }
         self.successors    = [] # do we need successors? branch/jump instructions may suffice
-        self.predecessors  = []
+        self.predecessors  = [] # no need for those, can compute on the fly
+        self.replacements  = {} # TODO: incorporate replacements into individual instructions
 
     def add_successor(self, block):
         if block not in self.successors:
@@ -66,7 +67,16 @@ class BasicBlock:
         self.phi_functions[reg] = Phi(reg + '_' + self.label)
 
     def __repr__(self):
-        return f'{self.label}'
+        def find_and_replace(string, replacements):
+            for find, replace in replacements.items():
+                string = string.replace(find, str(replace)) # TODO can we have numerical and boolean constants in replace?
+            return string
+        result = f'{self.label}:\n'
+        for phi in self.phi_functions.values():
+            result += f'{phi}\n'
+        for i in self.instructions:
+            result += find_and_replace(f'{i}\n', self.replacements)
+        return result
 
 class ControlFlowGraph:
     def __init__(self):
@@ -84,11 +94,7 @@ class ControlFlowGraph:
     def __repr__(self):
         result = 'Control Flow Graph:\n'
         for block in self.blocks.values():
-            result += f'{block.label}:\n'
-            result += '  Phi: ' + ', '.join([ str(phi) for phi in block.phi_functions.values() ]) + '\n'
-            result += '  Instr: ' + '\n          '.join([ str(i) for i in block.instructions ] ) + '\n'
-            result += f'  Successors: {[b.label for b in block.successors]}\n'
-            result += f'  Predecessors: {[b.label for b in block.predecessors]}\n\n'
+            result += f'{block}\n'
         return result
 
     def compute_dominance_frontier(self):
@@ -138,35 +144,30 @@ class ControlFlowGraph:
                     phi[v].add(frontier)
                     if frontier not in blocks_with_store:
                         blocks_to_consider.add(frontier)
-        print(phi)
-        for v, bb in phi.items():
+
+        for v, bb in phi.items():                                   # insert phi nodes (for the moment without choices)
             for b in bb:
                 b.add_phi_function(v)
 
         def store_load(block, visited, stack):
-            def find_variable(v, stack):
-                for frame in reversed(stack):
+            def find_variable(v, stack):                            # walk the stack back until
+                for frame in reversed(stack):                       # the current variable instance is found
                     if v in frame: return frame[v]
 
-            for v, phi in block.phi_functions.items():
-                b,val = find_variable(v, stack)
+            for v, phi in block.phi_functions.items():              # place phi node choice for the current path
+                b, val = find_variable(v, stack)
                 phi.choice[b] = val
+                stack[-1][v] = (block.label, phi.reg)
+            if block in visited: return                             # we need to revisit blocks with phi functions as many times as we have incoming edges,
+            visited.add(block)                                      # therefore the visited check is made after the choice placement
 
-
-            if block in visited: return
-
-            visited.add(block)
-
-            for i in block.instructions[:]: # iterate through a copy since we modify the list
+            for i in block.instructions[:]:                         # iterate through a copy since we modify the list
                 match i:
                     case Load():
-                        pass
-#                let (_, load_value) = decide_variable_value(from_variable, current_variable_value);
-#                block.remove(statement);
-#                function.replace(to, load_value);
-# from now on, all occurencies of self.reg are to be replaced by stack[-1][i.ptr][
+                        _, val = find_variable(i.ptr, stack)
+                        block.instructions.remove(i)
+                        block.replacements[i.reg] = val
                     case Store():
-#                        print(i)
                         stack[-1][i.ptr] = (block.label, i.value)
                         block.instructions.remove(i)
                     case Branch():
@@ -179,7 +180,7 @@ class ControlFlowGraph:
                     case Jump():
                         store_load(self.blocks[i.label],  visited, stack)
 
-        stack = [{}] # stack of maps (variable -> (block, value))
+        stack = [{}] # stack of maps (variable -> (block, value)); necessary for storing context while branching
         store_load(self.blocks['source'], set(), stack)
 
 
