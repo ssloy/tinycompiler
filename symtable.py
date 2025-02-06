@@ -36,14 +36,14 @@ class SymbolTable():
                 self.ret_stack[i]['nonlocal'].add((deco['fullname'], deco['type']))
             return deco
         except KeyError: raise Exception('No declaration for the variable %s' % name)
-        
+
     def find_fun(self, name, argtypes):
         try:
             signature = (name, *argtypes)
             for i in reversed(range(len(self.functions))): # find the function symbol
                 if signature in self.functions[i]: break
             deco = self.functions[i][signature]
-            if 'nonlocal' in deco:                       # propagate context pointers to the function call
+            if 'nonlocal' in deco:                         # propagate context pointers to the function call
                 for fullname,t in deco['nonlocal']:
                     label = fullname.partition('.')[0]
                     for f in reversed(self.ret_stack):
