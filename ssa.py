@@ -1,48 +1,9 @@
-###################
-# IR instructions #
-###################
-
 class Instruction:
-    def __init__(self, string, op1=None, op2=None, op3=None, t=None):
-        self.string, self.op1, self.op2, self.op3, self.t = string, op1, op2, op3, t
+    def __init__(self, str, t=None, a=None, b=None, c=None):
+        self.str, self.t, self.a, self.b, self.c = str, t, a, b, c
 
     def __repr__(self):
-        return self.string.format(op1=self.op1, op2=self.op2, op3=self.op3, t=self.t)
-
-class Branch:
-    def __init__(self, cond, ilabel, elabel):
-        self.cond, self.ilabel, self.elabel = cond, ilabel, elabel
-
-    def __repr__(self):
-        return f'br i1 {self.cond}, label {self.ilabel}, label {self.elabel}'
-
-class Jump:
-    def __init__(self, label):
-        self.label = label
-
-    def __repr__(self):
-        return f'br label {self.label}'
-
-class Load:
-    def __init__(self, reg, ptr):
-        self.reg, self.ptr = reg, ptr
-
-    def __repr__(self):
-        return f'{self.reg} = load {self.ptr}'
-
-class Store:
-    def __init__(self, value, ptr):
-        self.value, self.ptr = value, ptr
-
-    def __repr__(self):
-        return f'store {self.value}, {self.ptr}'
-
-class Alloca:
-    def __init__(self, ptr):
-        self.ptr = ptr
-
-    def __repr__(self):
-        return f'{self.ptr} = alloca'
+        return self.str.format(a=self.a, b=self.b, c=self.c, t=self.t)
 
 class Phi:
     def __init__(self, reg, choice=None):
@@ -52,18 +13,14 @@ class Phi:
         choice = ', '.join([ f'[{value}, {block}]' for block, value in self.choice.items() ])
         return f'{self.reg} = phi {choice}'
 
-######################
-# Control flow graph #
-######################
-
 class BasicBlock:
     def __init__(self, label):
         self.label = label
-        self.instructions  = []
+        self.instr  = []
         self.phi_functions = {} # map variable -> { Phi object }
-        self.successors    = [] # do we need successors? branch/jump instructions may suffice
+        self.successors    = [] # do we need successors? branch/jump instr may suffice
         self.predecessors  = [] # no need for those, can compute on the fly
-        self.replacements  = {} # TODO: incorporate replacements into individual instructions
+        self.replacements  = {} # TODO: incorporate replacements into individual instr
 
     def add_successor(self, block):
         if block not in self.successors:
@@ -81,7 +38,7 @@ class BasicBlock:
         result = f'{self.label}:\n'
         for phi in self.phi_functions.values():
             result += f'{phi}\n'
-        for i in self.instructions:
+        for i in self.instr:
             result += find_and_replace(f'{i}\n', self.replacements)
         return result
 
@@ -92,6 +49,13 @@ class ControlFlowGraph:
 
     def add_block(self, label):
         self.blocks[label] = BasicBlock(label)
+
+    def compute_adjacency(self):
+        for b in self.blocks.values():
+            i = b.instr[-1]
+            for succ in [i.a] if 'br label' in i.str else [i.b, i.c]:
+                if succ:
+                    self.add_edge(b.label, succ)
 
     def add_edge(self, from_label, to_label):
         from_block = self.blocks[from_label]
@@ -111,10 +75,10 @@ class ControlFlowGraph:
                 if b not in visited: dfs(b, visited, postorder)
             postorder.append(block)
         postorder = []                                              # for efficiency reasons, we visit blocks in a way that ensures
-        dfs(self.blocks['source'], set(), postorder)                # processing of each block after its predecessors have been processed
+        dfs(self.blocks['entry'], set(), postorder)                # processing of each block after its predecessors have been processed
 
         dom = { b : set(self.blocks.values()) for b in self.blocks.values() }
-        dom[ self.blocks['source'] ] = { self.blocks['source'] }    # dom[b] contains every block that dominates b
+        dom[ self.blocks['entry'] ] = { self.blocks['entry'] }    # dom[b] contains every block that dominates b
         changed = True
         while changed:                                              # the iterative dominator algorithm [Cooper, Harvey and Kennedy, 2006]
             changed = False
@@ -124,7 +88,7 @@ class ControlFlowGraph:
                     dom[b] = new_dom
                     changed = True
 
-        idom = { self.blocks['source'] : None }                     # idom[b] contains exactly one block, the immediate dominator of b
+        idom = { self.blocks['entry'] : None }                     # idom[b] contains exactly one block, the immediate dominator of b
         for b in postorder[-2::-1]:                                 # reverse or not we do not care here, but do not visit the source block
             idom[b] = max(dom[b] - {b}, key=lambda x: len(dom[x]))  # immediate dominator is the one with the maximum number of dominators (except the block itself)
 
@@ -140,10 +104,10 @@ class ControlFlowGraph:
     def mem2reg(self):
         self.compute_dominance_frontier()
 
-        variables = [ i.ptr for i in self.blocks['source'].instructions if isinstance(i, Alloca) ]
+        variables = [ i.ptr for i in self.blocks['entry'].instr if 'alloca' in i.str ]
         phi = { v:set() for v in variables }                        # map (variable -> set of basic blocks)
         for v in variables:
-            blocks_with_store = { b for b in self.blocks.values() for i in b.instructions if isinstance(i, Store) and i.ptr==v }
+            blocks_with_store = { b for b in self.blocks.values() for i in b.instr if isinstance(i, Store) and i.ptr==v }
             blocks_to_consider = blocks_with_store.copy()
             while blocks_to_consider:
                 block = blocks_to_consider.pop()
@@ -152,6 +116,7 @@ class ControlFlowGraph:
                     if frontier not in blocks_with_store:
                         blocks_to_consider.add(frontier)
 
+        print(phi)
         for v, bb in phi.items():                                   # insert phi nodes (for the moment without choices)
             for b in bb:
                 b.add_phi_function(v)
@@ -168,15 +133,15 @@ class ControlFlowGraph:
             if block in visited: return                             # we need to revisit blocks with phi functions as many times as we have incoming edges,
             visited.add(block)                                      # therefore the visited check is made after the choice placement
 
-            for i in block.instructions[:]:                         # iterate through a copy since we modify the list
+            for i in block.instr[:]:                         # iterate through a copy since we modify the list
                 match i:
                     case Load():
                         _, val = find_variable(i.ptr, stack)
-                        block.instructions.remove(i)
+                        block.instr.remove(i)
                         block.replacements[i.reg] = val
                     case Store():
                         stack[-1][i.ptr] = (block.label, i.value)
-                        block.instructions.remove(i)
+                        block.instr.remove(i)
                     case Branch():
                         stack.append({})
                         store_load(self.blocks[i.ilabel], visited, stack)
@@ -188,11 +153,10 @@ class ControlFlowGraph:
                         store_load(self.blocks[i.label],  visited, stack)
 
         stack = [{}] # stack of maps (variable -> (block, value)); necessary for storing context while branching
-        store_load(self.blocks['source'], set(), stack)
-
+        store_load(self.blocks['entry'], set(), stack)
 
 cfg = ControlFlowGraph()
-cfg.add_block('source')
+cfg.add_block('entry')
 cfg.add_block('bb1')
 cfg.add_block('bb2')
 cfg.add_block('bb3')
@@ -201,56 +165,61 @@ cfg.add_block('bb5')
 cfg.add_block('bb6')
 cfg.add_block('bb7')
 cfg.add_block('bb8')
-cfg.add_block('sink')
 
-cfg.blocks['source'].instructions.append(Alloca('%a'))
-cfg.blocks['source'].instructions.append(Jump('bb1'))
-cfg.add_edge('source', 'bb1')
+cfg.blocks['entry'].instr = [
+    Instruction('\t{a} = alloca {t}', 'i32', '%a'),
+    Instruction('\tbr label %{a}', None, 'bb1'),
+]
 
-cfg.blocks['bb1'].instructions.append(Store(1, '%a'))
-cfg.blocks['bb1'].instructions.append(Branch('foo', 'bb2', 'bb4'))
-cfg.add_edge('bb1', 'bb2')
-cfg.add_edge('bb1', 'bb4')
+cfg.blocks['bb1'].instr = [
+    Instruction('\tstore {t} {a}, {t}* {b}', 'i32', '1', '%a'),
+    Instruction('\tbr i1 %{a}, label %{b}, label %{c}', None, 'foo', 'bb2', 'bb4'),
+]
 
-cfg.blocks['bb2'].instructions.append(Load('%a0', '%a'))
-cfg.blocks['bb2'].instructions.append('%t0 = add %a0, 1')
-cfg.blocks['bb2'].instructions.append(Store('%t0', '%a'))
-cfg.blocks['bb2'].instructions.append(Jump('bb3'))
-cfg.add_edge('bb2', 'bb3')
+cfg.blocks['bb2'].instr = [
+    Instruction('\t{a} = load {t}, {t}* {b}', 'i32', '%a0', '%a'),
+    Instruction('\t{a} = add {t} {b}, {c}', 'i32', '%t0', '%a0', '1'),
+    Instruction('\tstore {t} {a}, {t}* {b}', 'i32', '1', '%a'),
+    Instruction('\tbr label %{a}', None, 'bb3'),
+]
 
-cfg.blocks['bb3'].instructions.append(Load('%a1', '%a'))
-cfg.blocks['bb3'].instructions.append('%t1 = add %a1, %a1')
-cfg.blocks['bb3'].instructions.append(Store('%t1', '%a'))
-cfg.blocks['bb3'].instructions.append(Branch('foo', 'bb8', 'bb2'))
-cfg.add_edge('bb3', 'bb2')
-cfg.add_edge('bb3', 'bb8')
+cfg.blocks['bb3'].instr = [
+    Instruction('\t{a} = load {t}, {t}* {b}', 'i32', '%a1', '%a'),
+    Instruction('\t{a} = add {t} {b}, {c}', 'i32', '%t1', '%a1', '%a1'),
+    Instruction('\tstore {t} {a}, {t}* {b}', 'i32', '%t1', '%a'),
+    Instruction('\tbr i1 %{a}, label %{b}, label %{c}', None, 'foo', 'bb8', 'bb2'),
+]
 
-cfg.blocks['bb5'].instructions.append(Load('%a2', '%a'))
-cfg.blocks['bb5'].instructions.append(Store(2, '%a'))
-cfg.blocks['bb5'].instructions.append(Jump('bb7'))
-cfg.add_edge('bb5', 'bb7')
+cfg.blocks['bb4'].instr = [
+    Instruction('\tbr i1 %{a}, label %{b}, label %{c}', None, 'foo', 'bb5', 'bb6'),
+]
 
-cfg.blocks['bb4'].instructions.append(Branch('foo', 'bb5', 'bb6'))
-cfg.add_edge('bb4', 'bb5')
-cfg.add_edge('bb4', 'bb6')
+cfg.blocks['bb5'].instr = [
+    Instruction('\t{a} = load {t}, {t}* {b}', 'i32', '%a2', '%a'),
+    Instruction('\tstore {t} {a}, {t}* {b}', 'i32', '2', '%a'),
+    Instruction('\tbr label %{a}', None, 'bb7'),
+]
 
-cfg.blocks['bb6'].instructions.append(Load('%a3', '%a'))
-cfg.blocks['bb6'].instructions.append(Store(3, '%a'))
-cfg.blocks['bb6'].instructions.append(Jump('bb7'))
-cfg.add_edge('bb6', 'bb7')
+cfg.blocks['bb6'].instr = [
+    Instruction('\t{a} = load {t}, {t}* {b}', 'i32', '%a3', '%a'),
+    Instruction('\tstore {t} {a}, {t}* {b}', 'i32', '3', '%a'),
+    Instruction('\tbr label %{a}', None, 'bb7'),
+]
 
-cfg.blocks['bb7'].instructions.append(Load('%a4', '%a'))
-cfg.blocks['bb7'].instructions.append(Jump('bb8'))
-cfg.add_edge('bb7', 'bb8')
+cfg.blocks['bb7'].instr = [
+    Instruction('\t{a} = load {t}, {t}* {b}', 'i32', '%a4', '%a'),
+    Instruction('\tbr label %{a}', None, 'bb8'),
+]
 
-cfg.blocks['bb8'].instructions.append(Load('%a5', '%a'))
-cfg.blocks['bb8'].instructions.append('ret %a5')
-cfg.add_edge('bb8', 'sink')
+cfg.blocks['bb8'].instr = [
+    Instruction('\t{a} = load {t}, {t}* {b}', 'i32', '%a5', '%a'),
+    Instruction('\tret {a}', None, '%a5'),
+]
+
 print(cfg)
+cfg.compute_adjacency()
 
-cfg.mem2reg()
+#cfg.mem2reg()
 
-print(cfg)
-
-
+#print(cfg)
 
