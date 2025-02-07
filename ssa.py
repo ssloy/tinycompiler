@@ -1,6 +1,6 @@
 class Instruction:
     def __init__(self, str, t=None, a=None, b=None, c=None):
-        self.str, self.t, self.a, self.b, self.c = str, t, a, b, c
+        self.str, self.t, self.a, self.b, self.c = str, t, a, b, c # string, type and three parameters
 
     def __repr__(self):
         return self.str.format(a=self.a, b=self.b, c=self.c, t=self.t)
@@ -16,56 +16,37 @@ class Phi:
 class BasicBlock:
     def __init__(self, label):
         self.label = label
-        self.instructions  = []
-        self.phi_functions = {} # map variable -> { Phi object }
-        self.successors    = set() # do we need successors? branch/jump instr may suffice
-        self.predecessors  = set() # no need for those, can compute on the fly
-        self.replacements  = {} # TODO: incorporate replacements into individual instr
+        self.phi_functions, self.instructions  = [], []
+        self.successors, self.predecessors = set(), set()
 
-    def add_successor(self, block):
-        if block not in self.successors:
-            self.successors.add(block)
-            block.predecessors.add(self)
-
-    def add_phi_function(self, reg):
-        self.phi_functions[reg] = Phi(reg + '_' + self.label)
-
-    def replace(self):
+    def find_and_replace(self, find, replace):
         for i in self.instructions:
-            i.a, i.b, i.c = ( self.replacements.get(s, s) for s in (i.a, i.b, i.c) )
-        self.replacements = {}
+            i.a, i.b, i.c = ( replace if s==find else s for s in (i.a, i.b, i.c) )
 
     def __repr__(self):
-        self.replace()
         return f'{self.label}:\n' + \
-                ''.join( [ f'{phi}\n' for phi in self.phi_functions.values() ] ) + \
-                ''.join( [ f'{i}\n' for i in self.instructions ] )
+                ''.join( [ f'{phi}\n' for phi in self.phi_functions ] ) + \
+                ''.join( [ f'{i}\n'   for i   in self.instructions  ] )
 
 class ControlFlowGraph:
     def __init__(self):
         self.blocks = {}
-        self.df = {}
+        self.dominance_frontier = {}                                #  dominance_frontier[v] is a set of blocks, control flow join points (where two or more potential definitions can come together)
 
     def add_block(self, label):
         self.blocks[label] = BasicBlock(label)
 
-    def compute_adjacency(self):
-        for b in self.blocks.values():
-            i = b.instructions[-1]
+    def compute_adjacency(self):                                    # TODO do we need to reset successors and predecessors?
+        for b1 in self.blocks.values():
+            i = b1.instructions[-1]                                 # last instruction, most often a jump or branch
+            if 'br' not in i.str: continue                          # but it can also be a ret instruction or even unreachable
             for succ in [i.a] if 'br label' in i.str else [i.b, i.c]:
-                if succ:
-                    self.add_edge(b.label, succ)
-
-    def add_edge(self, from_label, to_label):
-        from_block = self.blocks[from_label]
-        to_block   = self.blocks[to_label]
-        from_block.add_successor(to_block)
+                b2 = self.blocks[succ]
+                b1.successors.add(b2)
+                b2.predecessors.add(b1)
 
     def __repr__(self):
-        result = 'Control Flow Graph:\n'
-        for block in self.blocks.values():
-            result += f'{block}\n'
-        return result
+        return ''.join( [ f'{block}' for block in self.blocks.values() ] )
 
     def compute_dominance_frontier(self):
         def dfs(block, visited, postorder):
@@ -91,13 +72,13 @@ class ControlFlowGraph:
         for b in postorder[-2::-1]:                                 # reverse or not we do not care here, but do not visit the source block
             idom[b] = max(dom[b] - {b}, key=lambda x: len(dom[x]))  # immediate dominator is the one with the maximum number of dominators (except the block itself)
 
-        self.df = { b : set() for b in self.blocks.values() }
+        self.dominance_frontier = { b : set() for b in self.blocks.values() }
         for b in self.blocks.values():                              # the dominance-frontier algorithm
             if len(b.predecessors) < 2: continue
             for p in b.predecessors:
                 runner = p
                 while runner != idom[b]:
-                    self.df[runner].add(b)
+                    self.dominance_frontier[runner].add(b)
                     runner = idom[runner]
 
     def mem2reg(self):
@@ -110,21 +91,22 @@ class ControlFlowGraph:
             blocks_to_consider = blocks_with_store.copy()
             while blocks_to_consider:
                 block = blocks_to_consider.pop()
-                for frontier in self.df[block]:
+                for frontier in self.dominance_frontier[block]:
                     phi[v].add(frontier)
                     if frontier not in blocks_with_store:
                         blocks_to_consider.add(frontier)
 
         for v, bb in phi.items():                                   # insert phi nodes (for the moment without choices)
             for b in bb:
-                b.add_phi_function(v)
+                b.phi_functions.append(Phi(v + '_' + b.label))
 
         def store_load(block, visited, stack):
             def find_variable(v, stack):                            # walk the stack back until
                 for frame in reversed(stack):                       # the current variable instance is found
                     if v in frame: return frame[v]
 
-            for v, phi in block.phi_functions.items():              # place phi node choice for the current path
+            for phi in block.phi_functions:                         # place phi node choice for the current path
+                v = phi.reg[:-len(block.label)-1]                   # phi saves the choice into a register named foo_bar, where foo is the name of the variable, and bar is the name of the basic block
                 b, val = find_variable(v, stack)
                 phi.choice[b] = val
                 stack[-1][v] = (block.label, phi.reg)
@@ -136,7 +118,7 @@ class ControlFlowGraph:
                     case _ if 'load' in i.str:
                         _, val = find_variable(i.b, stack)
                         block.instructions.remove(i)
-                        block.replacements[i.a] = val
+                        block.find_and_replace(i.a, val)
                     case _ if 'store' in i.str:
                         stack[-1][i.b] = (block.label, i.a)
                         block.instructions.remove(i)
