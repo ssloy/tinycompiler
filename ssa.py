@@ -2,6 +2,13 @@
 # IR instructions #
 ###################
 
+class Instruction:
+    def __init__(self, string, op1=None, op2=None, op3=None, t=None):
+        self.string, self.op1, self.op2, self.op3, self.t = string, op1, op2, op3, t
+
+    def __repr__(self):
+        return self.string.format(op1=self.op1, op2=self.op2, op3=self.op3, t=self.t)
+
 class Branch:
     def __init__(self, cond, ilabel, elabel):
         self.cond, self.ilabel, self.elabel = cond, ilabel, elabel
