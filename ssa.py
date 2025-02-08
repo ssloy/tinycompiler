@@ -1,9 +1,9 @@
 class Instruction:
-    def __init__(self, str, t=None, a=None, b=None, c=None):
-        self.str, self.t, self.a, self.b, self.c = str, t, a, b, c # string, type and three parameters
+    def __init__(self, string, t=None, a=None, b=None, c=None):
+        self.string, self.t, self.a, self.b, self.c = string, t, a, b, c # string, type and three parameters
 
     def __repr__(self):
-        return self.str.format(a=self.a, b=self.b, c=self.c, t=self.t)
+        return self.string.format(a=self.a, b=self.b, c=self.c, t=self.t)
 
 class Phi:
     def __init__(self, reg, choice=None):
@@ -38,9 +38,10 @@ class ControlFlowGraph:
 
     def compute_adjacency(self):                                    # TODO do we need to reset successors and predecessors?
         for b1 in self.blocks.values():
+        # TODO if we have ret inside the block, no need to create an outgoing edge
             i = b1.instructions[-1]                                 # last instruction, most often a jump or branch
-            if 'br' not in i.str: continue                          # but it can also be a ret instruction or even unreachable
-            for succ in [i.a] if 'br label' in i.str else [i.b, i.c]:
+            if 'br' not in i.string: continue                          # but it can also be a ret instruction or even unreachable
+            for succ in [i.a] if 'br label' in i.string else [i.b, i.c]:
                 b2 = self.blocks[succ]
                 b1.successors.add(b2)
                 b2.predecessors.add(b1)
@@ -84,10 +85,10 @@ class ControlFlowGraph:
     def mem2reg(self):
         self.compute_dominance_frontier()
 
-        variables = [ i.a for i in self.blocks['entry'].instructions if 'alloca' in i.str ]
+        variables = [ i.a for i in self.blocks['entry'].instructions if 'alloca' in i.string ]
         phi = { v:set() for v in variables }                        # map (variable -> set of basic blocks)
         for v in variables:
-            blocks_with_store = { b for b in self.blocks.values() for i in b.instructions if 'store' in i.str and i.b==v }
+            blocks_with_store = { b for b in self.blocks.values() for i in b.instructions if 'store' in i.string and i.b==v }
             blocks_to_consider = blocks_with_store.copy()
             while blocks_to_consider:
                 block = blocks_to_consider.pop()
@@ -114,22 +115,22 @@ class ControlFlowGraph:
             visited.add(block)                                      # therefore the visited check is made after the choice placement
 
             for i in block.instructions[:]:                         # iterate through a copy since we modify the list
-                match i.str:
-                    case _ if 'load' in i.str:
+                match i.string:
+                    case _ if 'load' in i.string:
                         _, val = find_variable(i.b, stack)
                         block.instructions.remove(i)
                         block.find_and_replace(i.a, val)
-                    case _ if 'store' in i.str:
+                    case _ if 'store' in i.string:
                         stack[-1][i.b] = (block.label, i.a)
                         block.instructions.remove(i)
-                    case _ if 'br i1' in i.str:
+                    case _ if 'br i1' in i.string:
                         stack.append({})
                         store_load(self.blocks[i.b], visited, stack)
                         stack.pop()
                         stack.append({})
                         store_load(self.blocks[i.c], visited, stack)
                         stack.pop()
-                    case _ if 'br label' in i.str:
+                    case _ if 'br label' in i.string:
                         store_load(self.blocks[i.a],  visited, stack)
         stack = [{}] # stack of maps (variable -> (block, value)); necessary for storing context while branching
         store_load(self.blocks['entry'], set(), stack)
