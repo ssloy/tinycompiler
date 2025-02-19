@@ -19,19 +19,17 @@ gcc metaballs.c -o metaballs -lm &&
 gcc race.c -o race -lm
 ```
 
-
 ### Mandelbrot set
-<img src="https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/mandelbrot.png" width="336">
+<img src="https://ssloy.github.io/tinycompiler/home/mandelbrot.png" width="336">
 
 ### Zero-player breakout game
-![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/breakout.gif)
+![](https://ssloy.github.io/tinycompiler/home/breakout.gif)
 
 ### Fire
-![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/fire6.gif)
+![](https://ssloy.github.io/tinycompiler/home/fire.gif)
 
 ### Sunset race
-![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/sunset-race.gif)
+![](https://ssloy.github.io/tinycompiler/home/sunset-race.gif)
 
 ### Metaballs
-![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/metaballs.gif)
-
+![](https://ssloy.github.io/tinycompiler/home/metaballs.gif)
