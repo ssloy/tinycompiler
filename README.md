@@ -1,15 +1,14 @@
-> # N.B.: Under construction: I am happy with the code, but I need some time to write a series of articles explaining the things under the hood. It is highly likely that I'll extend the code to make the compiler optimising
-> current description draft (in russian) is available here: https://habr.com/ru/articles/786158/
-
-> in fact, [tinyoptimizer](https://github.com/ssloy/tinyoptimizer) is actually happening (work in progress) :)
-
 # tinycompiler - a 500-ish lines of code compiler in a weekend
-Have you ever wondered how a compiler works? If so, this project is for you.
 
-This weekend I'll write a compiler that translates a code written in a very simple programming language Wend (short for a week-end) into GNU assembly.
-This repository, however, will contain more than the final code. It will tell you a story about compilers.
+Have you ever wondered how a compiler works, but you never found courage to find out?
+Then this series of articles is for you.
+I have never had the chance to look under the hood either, but one week-end I have decided to to write a translator from the esoteric programming language *wend* (short for week-end),
+which I just invented myself, into regular GNU assembly.
+The goal is to keep the code as tiny as possible, 500-ish lines of python sounds great.
 
-So behold, here is a program that uses virtually all concepts in Wend:
+**N.B.: A detailed description is available [here](https://ssloy.github.io/tinycompiler/).**
+
+Here is a program that uses virtually all concepts in Wend:
 ```cpp
 main() {
     // square root of a fixed-point number
@@ -49,10 +48,6 @@ main() {
 }
 ```
 
-There will no be dynamic memory allocation, no pointers, no garbage collection. There will be nested functions, function overloading and type checking.
-
-And as usual, there will be a program with a raytracer :)
-
 ## run tests
 ```sh
 make test
@@ -64,19 +59,19 @@ It is so dull to compute Fibonacci numbers, so here are more eyecandy examples f
 make gfx
 ```
 ### Mandelbrot set
-<img src="https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/mandelbrot.png" width="336">
+<img src="https://ssloy.github.io/tinycompiler/home/mandelbrot.png" width="336">
 
 ### Zero-player breakout game
-![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/breakout.gif)
+![](https://ssloy.github.io/tinycompiler/home/breakout.gif)
 
 ### Fire
-![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/fire6.gif)
+![](https://ssloy.github.io/tinycompiler/home/fire.gif)
 
 ### Sunset race
-![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/sunset-race.gif)
+![](https://ssloy.github.io/tinycompiler/home/sunset-race.gif)
 
 ### Metaballs
-![](https://raw.githubusercontent.com/ssloy/ssloy.github.io/main/docs/tinycompiler/gfx/metaballs.gif)
+![](https://ssloy.github.io/tinycompiler/home/metaballs.gif)
 
 
 
