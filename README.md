@@ -2,7 +2,7 @@
 
 Have you ever wondered how a compiler works, but you never found courage to find out?
 Then this project is for you (**N.B.: a detailed description is available [here](https://ssloy.github.io/tinycompiler/)**).
-Then this series of articles is for you.
+
 I have never had the chance to look under the hood either, but one week-end I have decided to to write a translator from the esoteric programming language *wend* (short for week-end),
 which I just invented myself, into regular GNU assembly.
 The goal is to keep the code as tiny as possible, 500-ish lines of python sounds great.
