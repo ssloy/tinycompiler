@@ -1,4 +1,4 @@
-# tinycompiler - a 500-ish lines of code compiler in a weekend
+# TinyCompiler - a 500-ish lines of code compiler in a weekend
 
 Have you ever wondered how a compiler works, but you never found courage to find out?
 Then this series of articles is for you.
@@ -6,7 +6,7 @@ I have never had the chance to look under the hood either, but one week-end I ha
 which I just invented myself, into regular GNU assembly.
 The goal is to keep the code as tiny as possible, 500-ish lines of python sounds great.
 
-**N.B.: A detailed description is available [here](https://ssloy.github.io/tinycompiler/).**
+## N.B.: A detailed description is available [here](https://ssloy.github.io/tinycompiler/).
 
 Here is a program that uses virtually all concepts in Wend:
 ```cpp
