@@ -70,8 +70,8 @@ def expr(n): # convention: all expressions save their results to eax
             return templates['var'].format(scope = n.deco['scope']*4, variable = n.deco['offset']*4)
         case FunCall():
             return templates['funcall'].format(allocargs = ''.join(['%s\tpushl %%eax\n' % expr(a) for a in n.args]),
-                                                 varsize = len(n.deco['fundeco']['local'])*4,
-                                                disphead = len(n.deco['fundeco']['local'])*4 + len(n.args)*4 - 4,
-                                                   scope = n.deco['fundeco']['scope']*4,
-                                                funlabel = n.deco['fundeco']['label'])
+                                                 varsize = n.deco['var_cnt']*4,
+                                                disphead = n.deco['var_cnt']*4 + len(n.args)*4 - 4,
+                                                   scope = n.deco['scope']*4,
+                                                funlabel = n.deco['label'])
         case other: raise Exception('Unknown expression type', n)

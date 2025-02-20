@@ -55,7 +55,7 @@ class WendLexer:
                 if sym1 != '"' or accum and accum[-1]=='\\':        # if not quote mark (or if escaped quote mark),
                     accum += sym1                                   # continue the scan
                 else:
-                    yield Token('STRING', accum, lineno)            # otherwise emit the token
+                    yield Token('STRING', accum, lineno) # otherwise emit the token
                     state, accum = 0, '' # start new scan
             if sym1 == '\n':
                 lineno += 1
