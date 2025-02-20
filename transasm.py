@@ -1,5 +1,4 @@
 from syntree import *
-from analyzer import LabelFactory
 from transasm_recipe import templates
 
 def transasm(n):
@@ -22,37 +21,32 @@ def stat(n):
         case Print():
             match n.expr.deco['type']:
                 case Type.INT:
-                    asm = templates['print_int'].format(expr = expr(n.expr))
+                    asm = templates['print_int'].format(expr = stat(n.expr))
                 case Type.BOOL:
-                    asm = templates['print_bool'].format(expr = expr(n.expr))
+                    asm = templates['print_bool'].format(expr = stat(n.expr))
                 case Type.STRING:
                     asm = templates['print_string'].format(label = n.expr.deco['label'])
                 case other: raise Exception('Unknown expression type', n.expr)
             return asm + (templates['print_linebreak'] if n.newline else '')
         case Return():
-            return (expr(n.expr) if n.expr is not None and n.expr.deco['type'] != Type.VOID else '') + '\tret\n'
+            return (stat(n.expr) if n.expr is not None and n.expr.deco['type'] != Type.VOID else '') + '\tret\n'
         case Assign():
-            return templates['assign'].format(expression = expr(n.expr),
+            return templates['assign'].format(expression = stat(n.expr),
                                                    scope = n.deco['scope']*4,
                                                 variable = n.deco['offset']*4)
-        case FunCall(): return expr(n)
         case While():
-            return templates['while'].format(condition = expr(n.expr),
+            return templates['while'].format(condition = stat(n.expr),
                                                 label1 = LabelFactory.new_label(),
                                                 label2 = LabelFactory.new_label(),
                                                   body = ''.join([stat(s) for s in n.body]))
         case IfThenElse():
-            return templates['ifthenelse'].format(condition = expr(n.expr),
+            return templates['ifthenelse'].format(condition = stat(n.expr),
                                                      label1 = LabelFactory.new_label(),
                                                      label2 = LabelFactory.new_label(),
                                                       ibody = ''.join([stat(s) for s in n.ibody]),
                                                       ebody = ''.join([stat(s) for s in n.ebody]))
-        case other: raise Exception('Unknown statement type', n)
-
-def expr(n): # convention: all expressions save their results to eax
-    match n:
         case ArithOp() | LogicOp():
-            args = expr(n.left) + '\tpushl %eax\n' + expr(n.right) + '\tmovl %eax, %ebx\n\tpopl %eax\n'
+            args = stat(n.left) + '\tpushl %eax\n' + stat(n.right) + '\tmovl %eax, %ebx\n\tpopl %eax\n'
             pyeq1 = {'+':'addl', '-':'subl', '*':'imull', '||':'orl', '&&':'andl'}
             pyeq2 = {'<=':'jle', '<':'jl', '>=':'jge', '>':'jg', '==':'je', '!=':'jne'}
             if n.op in pyeq1:
@@ -69,9 +63,9 @@ def expr(n): # convention: all expressions save their results to eax
         case Var():
             return templates['var'].format(scope = n.deco['scope']*4, variable = n.deco['offset']*4)
         case FunCall():
-            return templates['funcall'].format(allocargs = ''.join(['%s\tpushl %%eax\n' % expr(a) for a in n.args]),
+            return templates['funcall'].format(allocargs = ''.join(['%s\tpushl %%eax\n' % stat(a) for a in n.args]),
                                                  varsize = n.deco['var_cnt']*4,
                                                 disphead = n.deco['var_cnt']*4 + len(n.args)*4 - 4,
                                                    scope = n.deco['scope']*4,
                                                 funlabel = n.deco['label'])
-        case other: raise Exception('Unknown expression type', n)
+        case other: raise Exception('Unknown instruction', n)
