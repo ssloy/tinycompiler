@@ -6,6 +6,11 @@ main() {
         int decpr;
         int i;
 
+        if x<0 {
+            print "-";
+            x = -x;
+        }
+
         print x / shift;
         print ".";
 
@@ -41,7 +46,7 @@ main() {
     int cos24(int x) {
         if x<0 { x = -x; }                             //
         while x>79060768 { x = x - 105414357; }        // reduce the argument to the acceptable range
-        if x>26353589 { return -sin24(x - 26353589); } //
+        if x>26353589 { return -cos24(52707179 - x); } //
         return 16777216 + (((x/4096)*(x/4096))/4096)*((((x/4096)*(x/4096))/27 - 8333243)/4096);
     }
 
