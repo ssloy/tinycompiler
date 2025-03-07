@@ -1,0 +1,646 @@
+main() {
+    //                         _              _
+    //      ___ ___  _ __  ___| |_ __ _ _ __ | |_ ___
+    //     / __/ _ \| '_ \/ __| __/ _` | '_ \| __/ __|
+    //    | (_| (_) | | | \__ \ || (_| | | | | |_\__ \
+    //     \___\___/|_| |_|___/\__\__,_|_| |_|\__|___/
+
+    int width;
+    int height;
+    int rays;
+
+    int box1min_x; int box1min_y; int box1min_z;
+    int box1max_x; int box1max_y; int box1max_z;
+    int box1col_r; int box1col_g; int box1col_b;
+
+    int box2min_x; int box2min_y; int box2min_z;
+    int box2max_x; int box2max_y; int box2max_z;
+    int box2col_r; int box2col_g; int box2col_b;
+
+    int sph1c_x; int sph1c_y; int sph1c_z; int sph1_r;
+    int sph1col_r; int sph1col_g; int sph1col_b;
+
+    int sph2c_x; int sph2c_y; int sph2c_z; int sph2_r;
+    int sph2col_r; int sph2col_g; int sph2col_b;
+
+    int sph3c_x; int sph3c_y; int sph3c_z; int sph3_r;
+    int sph3col_r; int sph3col_g; int sph3col_b;
+
+    //                     _       _     _
+    //    __   ____ _ _ __(_) __ _| |__ | | ___  ___
+    //    \ \ / / _` | '__| |/ _` | '_ \| |/ _ \/ __|
+    //     \ V / (_| | |  | | (_| | |_) | |  __/\__ \
+    //      \_/ \__,_|_|  |_|\__,_|_.__/|_|\___||___/
+
+    int rand; // random number generator static variable
+    int i; int j; int k;
+
+    int tmp1; int tmp2; int tmp3; int tmp4;
+
+    int color_r; int color_g; int color_b;
+    int color_acc_r; int color_acc_g; int color_acc_b;
+
+    int rayorg_x; int rayorg_y; int rayorg_z; // current ray to trace
+    int raydir_x; int raydir_y; int raydir_z;
+    int point_x;  int point_y;  int point_z;  // intersection point
+    int normal_x; int normal_y; int normal_z; // normal at the point
+
+    //      ____         __ _      __ _             _   _                           _       _
+    //     / ___|  ___  / _| |_   / _| | ___   __ _| |_(_)_ __   __ _   _ __   ___ (_)_ __ | |_
+    //     \___ \ / _ \| |_| __| | |_| |/ _ \ / _` | __| | '_ \ / _` | | '_ \ / _ \| | '_ \| __|
+    //      ___) | (_) |  _| |_  |  _| | (_) | (_| | |_| | | | | (_| | | |_) | (_) | | | | | |_
+    //     |____/ \___/|_|  \__| |_| |_|\___/ \__,_|\__|_|_| |_|\__, | | .__/ \___/|_|_| |_|\__|
+    //                                                          |___/  |_|
+
+    int fp32_normalize(int sign, int exponent, int mantissa) {
+        if (mantissa == 0) {
+            return 0;
+        }
+
+        while (mantissa < 8388608 && exponent > -127) { // mantissa > 0
+            mantissa = mantissa * 2;
+            exponent = exponent - 1;
+        }
+        while (mantissa >= 16777216) {
+            mantissa = mantissa / 2;
+            exponent = exponent + 1;
+        }
+
+        if (sign<0) {
+            sign = -2147483648;
+        } else {
+            sign = 0;
+        }
+        exponent = (exponent + 127) * 8388608; // add the bias and shift the exponent to the position
+        mantissa = mantissa % 8388608;         // clear the hidden bit (it will implicitly be there but not stored)
+        return sign + exponent + mantissa;
+    }
+
+    int fp32_from_int(int integer) {
+        if (integer>0) {
+            return fp32_normalize( 1, 23,  integer);
+        } else {
+            return fp32_normalize(-1, 23, -integer);
+        }
+    }
+
+    int fp32_sign(int fp) {
+        if (fp>=0) {
+            return  1;
+        } else {
+            return -1;
+        }
+    }
+
+    int fp32_exponent(int fp) {
+        if (fp<0) { // clear the MSB
+            fp = (fp + 1073741824) + 1073741824; // avoid overflow
+        }
+        return fp/8388608 - 127;
+    }
+
+    int fp32_mantissa(int fp) { // the mantissa is in [1..2), i.e. the hidden bit included
+        int exponent;
+        int mantissa;
+        if (fp<0) { // clear the MSB
+            fp = (fp + 1073741824) + 1073741824; // avoid overflow
+        }
+        exponent = fp / 8388608;
+        mantissa = fp % 8388608;
+        if (exponent==0 && mantissa==0) {
+            return 0;
+        }
+        return 8388608 + mantissa;
+    }
+
+    int fp32_to_int(int fp) {
+        int sign;
+        int exponent;
+        int mantissa;
+
+        sign = fp32_sign(fp);
+        exponent = fp32_exponent(fp);
+        mantissa = fp32_mantissa(fp);
+
+        if (mantissa==0) {
+            return 0;
+        }
+
+        while (exponent!=0) {
+            if (exponent > 0) {
+                if (mantissa < 1073741824) {
+                    mantissa = mantissa * 2;
+                } else {
+                    if (sign<0) {
+                        return -2147483648;
+                    } else {
+                        return 2147483647;
+                    }
+                }
+                exponent = exponent - 1;
+            } else {
+                mantissa = mantissa / 2;
+                exponent = exponent + 1;
+            }
+        }
+        return sign*mantissa;
+    }
+
+    int fp32_flip_sign(int fp) {
+        if (fp >= 0) {
+            return (fp - 1073741824) - 1073741824;
+        } else {
+            return (fp + 1073741824) + 1073741824;
+        }
+    }
+
+    int fp32_add(int a, int b) {
+        int sign_a;
+        int sign_b;
+        int exponent_a;
+        int exponent_b;
+        int mantissa_a;
+        int mantissa_b;
+        int mantissa_ab;
+        int sign_ab;
+
+        sign_a = fp32_sign(a);
+        sign_b = fp32_sign(b);
+        exponent_a = fp32_exponent(a);
+        exponent_b = fp32_exponent(b);
+        mantissa_a = fp32_mantissa(a);
+        mantissa_b = fp32_mantissa(b);
+
+        while (exponent_a > exponent_b) {
+            mantissa_b = mantissa_b / 2;
+            exponent_b = exponent_b + 1;
+        }
+        while (exponent_a < exponent_b) {
+            mantissa_a = mantissa_a / 2;
+            exponent_a = exponent_a + 1;
+        }
+
+        sign_ab = sign_a;
+        if (sign_a==sign_b) {
+            mantissa_ab = mantissa_a + mantissa_b;
+        } else {
+            mantissa_ab = mantissa_a - mantissa_b;
+            if (mantissa_ab<0) {
+                sign_ab = -sign_a;
+                mantissa_ab = -mantissa_ab;
+            }
+        }
+        return fp32_normalize(sign_ab, exponent_a, mantissa_ab);
+    }
+
+    int fp32_sub(int a, int b) {
+        return fp32_add(a, fp32_flip_sign(b));
+    }
+
+    int fp32_mul(int a, int b) {
+        int sign_a; int exponent_a; int mantissa_a;
+        int sign_b; int exponent_b; int mantissa_b;
+        int a_hi; int a_lo; int b_hi; int b_lo;
+        int hihi; int hilo; int lohi; int lolo;
+        int mantissa_low; int mantissa_high;
+
+        sign_a = fp32_sign(a);
+        sign_b = fp32_sign(b);
+        exponent_a = fp32_exponent(a);
+        exponent_b = fp32_exponent(b);
+        mantissa_a = fp32_mantissa(a);
+        mantissa_b = fp32_mantissa(b);
+
+        a_hi = mantissa_a / 4096; // multiply 2 24-bit mantissas
+        a_lo = mantissa_a % 4096; // into two 24-bit halves mantissa_high, mantissa_low
+        b_hi = mantissa_b / 4096;
+        b_lo = mantissa_b % 4096;
+        hihi = a_hi * b_hi;
+        hilo = a_hi * b_lo;
+        lohi = a_lo * b_hi;
+        lolo = a_lo * b_lo;
+        mantissa_low = lolo + (hilo%4096 + lohi%4096)*4096;
+        mantissa_high = hihi + hilo/4096 + lohi/4096 + mantissa_low/16777216;
+        mantissa_low = mantissa_low % 16777216;
+
+        return fp32_normalize(sign_a*sign_b, exponent_a + exponent_b + 1, mantissa_high);
+    }
+
+    int fp32_div(int a, int b) {
+        int sign_a; int exponent_a; int mantissa_a;
+        int sign_b; int exponent_b; int mantissa_b;
+        int exponent; int mantissa; int remainder;
+
+        sign_a = fp32_sign(a);
+        sign_b = fp32_sign(b);
+        exponent_a = fp32_exponent(a);
+        exponent_b = fp32_exponent(b);
+        mantissa_a = fp32_mantissa(a);
+        mantissa_b = fp32_mantissa(b);
+
+        if (mantissa_a == 0) {
+            return 0;
+        }
+
+        mantissa  = mantissa_a / mantissa_b;
+        remainder = mantissa_a % mantissa_b;
+        exponent  = exponent_a - exponent_b - 1 + 24;
+
+        if (mantissa == 0) { // TODO: meh
+            mantissa = 1;
+            exponent = exponent - 1;
+            remainder = remainder * 2;
+            if (remainder >= mantissa_b) {
+                remainder = remainder - mantissa_b;
+            }
+        }
+        while (mantissa < 8388608) {
+            mantissa = mantissa * 2;
+            remainder = remainder * 2;
+            exponent = exponent - 1;
+            if (remainder >= mantissa_b) {
+                mantissa = mantissa + 1;
+                remainder = remainder - mantissa_b;
+            }
+        }
+
+        return fp32_normalize(sign_a*sign_b, exponent, mantissa);
+    }
+
+    int fp32_abs(int fp) {
+        if (fp >= 0) {
+            return fp;
+        } else {
+            return (fp + 1073741824) + 1073741824;
+        }
+    }
+
+    int fp32_sqrt(int fp) {
+        int x;
+        int x_old;
+
+        x = fp;
+        while (true) {
+            x_old = x;
+            x = fp32_div(fp32_add(x, fp32_div(fp, x)), fp32_from_int(2));
+            if (x>=x_old && x-x_old<=1) ||(x<=x_old && x_old-x<=1) { // 1 ulp difference
+                return x;
+            }
+        }
+    }
+
+    // LCM pseudo-random number generator.
+    // Outputs numbers from 0..65535 inclusive.
+
+    int rand() {
+        rand = (rand*25173 + 13849) % 65536;
+        return rand;
+    }
+
+    // (-1..1) random floating point number
+    int fp32_rand() {
+        return fp32_div(fp32_from_int(2*rand()-32768), fp32_from_int(32768));
+    }
+
+//     ____               _                  _
+//    |  _ \ __ _ _   _  | |_ _ __ __ _  ___(_)_ __   __ _
+//    | |_) / _` | | | | | __| '__/ _` |/ __| | '_ \ / _` |
+//    |  _ < (_| | |_| | | |_| | | (_| | (__| | | | | (_| |
+//    |_| \_\__,_|\__, |  \__|_|  \__,_|\___|_|_| |_|\__, |
+//                |___/                              |___/
+
+    bool point_inside_rectangle(int x, int y, int xmin, int ymin, int xmax, int ymax) {
+        return fp32_sub(x, xmin)>=0 && fp32_sub(x, xmax)<=0 && fp32_sub(y, ymin)>=0 && fp32_sub(y, ymax)<=0;
+    }
+
+    bool ray_box_intersect(int boxmin_x, int boxmin_y, int boxmin_z, int boxmax_x, int boxmax_y, int boxmax_z) {
+        int d;
+        int side;
+
+        normal_x = 0; normal_y = 0; normal_z = 0;
+        if fp32_sub(fp32_abs(raydir_x), 981668463)>0 { // |x|<0.001
+            if raydir_x>0 {
+                side = boxmin_x;
+                normal_x = fp32_from_int(-1);
+            } else {
+                side = boxmax_x;
+                normal_x =  fp32_from_int(1);
+            }
+            d = fp32_div(fp32_sub(side,rayorg_x),raydir_x);
+            if d>0 {
+                point_x = fp32_add(rayorg_x, fp32_mul(raydir_x, d));
+                point_y = fp32_add(rayorg_y, fp32_mul(raydir_y, d));
+                point_z = fp32_add(rayorg_z, fp32_mul(raydir_z, d));
+                if point_inside_rectangle(point_y, point_z, boxmin_y, boxmin_z, boxmax_y, boxmax_z) {
+                    return true;
+                }
+            }
+        }
+
+        normal_x = 0; normal_y = 0; normal_z = 0;
+        if fp32_sub(fp32_abs(raydir_y), 981668463)>0 { // |y|<0.001
+            if raydir_y>0 {
+                side = boxmin_y;
+                normal_y = fp32_from_int(-1);
+            } else {
+                side = boxmax_y;
+                normal_y =  fp32_from_int(1);
+            }
+            d = fp32_div(fp32_sub(side,rayorg_y),raydir_y);
+            if d>0 {
+                point_x = fp32_add(rayorg_x, fp32_mul(raydir_x, d));
+                point_y = fp32_add(rayorg_y, fp32_mul(raydir_y, d));
+                point_z = fp32_add(rayorg_z, fp32_mul(raydir_z, d));
+                if point_inside_rectangle(point_x, point_z, boxmin_x, boxmin_z, boxmax_x, boxmax_z) {
+                    return true;
+                }
+            }
+        }
+
+        normal_x = 0; normal_y = 0; normal_z = 0;
+        if fp32_sub(fp32_abs(raydir_z), 981668463)>0 { // |z|<0.001
+            if raydir_z>0 {
+                side = boxmin_z;
+                normal_z = fp32_from_int(-1);
+            } else {
+                side = boxmax_z;
+                normal_z =  fp32_from_int(1);
+            }
+            d = fp32_div(fp32_sub(side,rayorg_z),raydir_z);
+            if d>0 {
+                point_x = fp32_add(rayorg_x, fp32_mul(raydir_x, d));
+                point_y = fp32_add(rayorg_y, fp32_mul(raydir_y, d));
+                point_z = fp32_add(rayorg_z, fp32_mul(raydir_z, d));
+                if point_inside_rectangle(point_x, point_y, boxmin_x, boxmin_y, boxmax_x, boxmax_y) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool ray_sphere_intersect(int sphc_x, int sphc_y, int sphc_z, int sph_r) {
+        int displacement_x; int displacement_y; int displacement_z;
+        int proj;
+        int discriminant;
+        int factor;
+
+        displacement_x = fp32_sub(sphc_x, rayorg_x);
+        displacement_y = fp32_sub(sphc_y, rayorg_y);
+        displacement_z = fp32_sub(sphc_z, rayorg_z);
+        proj = fp32_add(
+               fp32_add(
+                 fp32_mul(displacement_x, raydir_x),
+                 fp32_mul(displacement_y, raydir_y)),
+                 fp32_mul(displacement_z, raydir_z));
+        discriminant = fp32_add(
+                         fp32_mul(sph_r, sph_r),
+                         fp32_sub(
+                           fp32_mul(proj, proj),
+                           fp32_add(
+                           fp32_add(
+                             fp32_mul(displacement_x, displacement_x),
+                             fp32_mul(displacement_y, displacement_y)) ,
+                             fp32_mul(displacement_z, displacement_z))));
+
+
+        if discriminant<0 { return false; }
+        factor = fp32_sub(proj, fp32_sqrt(discriminant));
+        if (factor<0) { return false; }
+        point_x = fp32_add(rayorg_x, fp32_mul(raydir_x, factor));
+        point_y = fp32_add(rayorg_y, fp32_mul(raydir_y, factor));
+        point_z = fp32_add(rayorg_z, fp32_mul(raydir_z, factor));
+        normal_x = fp32_div(fp32_sub(sphc_x, point_x), sph_r);
+        normal_y = fp32_div(fp32_sub(sphc_y, point_y), sph_r);
+        normal_z = fp32_div(fp32_sub(sphc_z, point_z), sph_r);
+        return true;
+    }
+
+    trace(int depth) {
+        int tmp_dist;
+        int best_dist;
+        int best_point_x;  int best_point_y;  int best_point_z;
+        int best_normal_x; int best_normal_y; int best_normal_z;
+        int best_color_r;  int best_color_g;  int best_color_b;
+
+        if depth>4 {
+            color_r = (color_r *102)/255;
+            color_g = (color_g *102)/255;
+            color_b = (color_b *102)/255;
+            return;
+        }
+
+        best_dist = fp32_from_int(-1);
+
+        if ray_box_intersect(box1min_x, box1min_y, box1min_z, box1max_x, box1max_y, box1max_z) {
+            best_color_r = box1col_r;
+            best_color_g = box1col_g;
+            best_color_b = box1col_b;
+            best_normal_x = normal_x;
+            best_normal_y = normal_y;
+            best_normal_z = normal_z;
+            best_point_x = point_x;
+            best_point_y = point_y;
+            best_point_z = point_z;
+            best_dist = fp32_add(fp32_add(
+                          fp32_mul(fp32_sub(point_x, rayorg_x), fp32_sub(point_x, rayorg_x)),
+                          fp32_mul(fp32_sub(point_y, rayorg_y), fp32_sub(point_y, rayorg_y))),
+                          fp32_mul(fp32_sub(point_z, rayorg_z), fp32_sub(point_z, rayorg_z)));
+        }
+
+        if ray_box_intersect(box2min_x, box2min_y, box2min_z, box2max_x, box2max_y, box2max_z) {
+            tmp_dist = fp32_add(fp32_add(
+                        fp32_mul(fp32_sub(point_x, rayorg_x), fp32_sub(point_x, rayorg_x)),
+                        fp32_mul(fp32_sub(point_y, rayorg_y), fp32_sub(point_y, rayorg_y))),
+                        fp32_mul(fp32_sub(point_z, rayorg_z), fp32_sub(point_z, rayorg_z)));
+            if fp32_sub(best_dist, tmp_dist)>0 || best_dist<0 {
+                best_dist = tmp_dist;
+                best_color_r = box2col_r;
+                best_color_g = box2col_g;
+                best_color_b = box2col_b;
+                best_normal_x = normal_x;
+                best_normal_y = normal_y;
+                best_normal_z = normal_z;
+                best_point_x = point_x;
+                best_point_y = point_y;
+                best_point_z = point_z;
+            }
+        }
+
+        if ray_sphere_intersect(sph1c_x, sph1c_y, sph1c_z, sph1_r) {
+            tmp_dist = fp32_add(fp32_add(
+                         fp32_mul(fp32_sub(point_x, rayorg_x), fp32_sub(point_x, rayorg_x)),
+                         fp32_mul(fp32_sub(point_y, rayorg_y), fp32_sub(point_y, rayorg_y))),
+                         fp32_mul(fp32_sub(point_z, rayorg_z), fp32_sub(point_z, rayorg_z)));
+            if fp32_sub(best_dist, tmp_dist)>0 || best_dist<0 {
+                best_dist = tmp_dist;
+                best_color_r = sph1col_r;
+                best_color_g = sph1col_g;
+                best_color_b = sph1col_b;
+                best_normal_x = normal_x;
+                best_normal_y = normal_y;
+                best_normal_z = normal_z;
+                best_point_x = point_x;
+                best_point_y = point_y;
+                best_point_z = point_z;
+            }
+        }
+
+        if ray_sphere_intersect(sph2c_x, sph2c_y, sph2c_z, sph2_r) {
+            tmp_dist = fp32_add(fp32_add(
+                         fp32_mul(fp32_sub(point_x, rayorg_x), fp32_sub(point_x, rayorg_x)),
+                         fp32_mul(fp32_sub(point_y, rayorg_y), fp32_sub(point_y, rayorg_y))),
+                         fp32_mul(fp32_sub(point_z, rayorg_z), fp32_sub(point_z, rayorg_z)));
+            if fp32_sub(best_dist, tmp_dist)>0 || best_dist<0 {
+                best_dist = tmp_dist;
+                best_color_r = sph2col_r;
+                best_color_g = sph2col_g;
+                best_color_b = sph2col_b;
+                best_normal_x = normal_x;
+                best_normal_y = normal_y;
+                best_normal_z = normal_z;
+                best_point_x = point_x;
+                best_point_y = point_y;
+                best_point_z = point_z;
+            }
+        }
+
+        if ray_sphere_intersect(sph3c_x, sph3c_y, sph3c_z, sph3_r) {
+            tmp_dist = fp32_add(fp32_add(
+                         fp32_mul(fp32_sub(point_x, rayorg_x), fp32_sub(point_x, rayorg_x)),
+                         fp32_mul(fp32_sub(point_y, rayorg_y), fp32_sub(point_y, rayorg_y))),
+                         fp32_mul(fp32_sub(point_z, rayorg_z), fp32_sub(point_z, rayorg_z)));
+            if fp32_sub(best_dist, tmp_dist)>0 || best_dist<0 {
+                return;
+            }
+        }
+
+        if best_dist>=0 {
+            color_r = (color_r * best_color_r)/255;
+            color_g = (color_g * best_color_g)/255;
+            color_b = (color_b * best_color_b)/255;
+
+            rayorg_x = best_point_x;
+            rayorg_y = best_point_y;
+            rayorg_z = best_point_z;
+
+            // reflect
+            tmp1 = fp32_mul(
+                     fp32_from_int(2),
+                     fp32_add(fp32_add(
+                       fp32_mul(raydir_x, best_normal_x),
+                       fp32_mul(raydir_y, best_normal_y)),
+                       fp32_mul(raydir_z, best_normal_z)));
+
+            raydir_x = fp32_add(fp32_sub(raydir_x, fp32_mul(best_normal_x,tmp1)), fp32_div(fp32_rand(), fp32_from_int(12)));
+            raydir_y = fp32_add(fp32_sub(raydir_y, fp32_mul(best_normal_y,tmp1)), fp32_div(fp32_rand(), fp32_from_int(12)));
+            raydir_z = fp32_add(fp32_sub(raydir_z, fp32_mul(best_normal_z,tmp1)), fp32_div(fp32_rand(), fp32_from_int(12)));
+
+            tmp1 = fp32_sqrt( // the norm
+                   fp32_add(
+                       fp32_add(
+                           fp32_mul(raydir_x, raydir_x),
+                           fp32_mul(raydir_y, raydir_y)),
+                           fp32_mul(raydir_z, raydir_z))
+                   );
+            raydir_x = fp32_div(raydir_x, tmp1); // normalize the ray direction
+            raydir_y = fp32_div(raydir_y, tmp1);
+            raydir_z = fp32_div(raydir_z, tmp1);
+
+            trace(depth+1);
+        } else {
+            color_r = (color_r *102)/255;
+            color_g = (color_g *102)/255;
+            color_b = (color_b *102)/255;
+        }
+    }
+
+    width  = 320;
+    height = 240;
+    rays   = 30;
+    rand = 1337; // the seed for the random number generator
+
+    box1min_x = fp32_from_int(30); box1min_y = fp32_from_int(-40); box1min_z = fp32_from_int(110);
+    box1max_x = fp32_from_int(70); box1max_y = fp32_from_int( 20); box1max_z = fp32_from_int(130);
+    box1col_r = 102; box1col_g = 179; box1col_b = 255;
+
+    box2min_x = fp32_from_int(  0); box2min_y = fp32_from_int(20); box2min_z = fp32_from_int( 60);
+    box2max_x = fp32_from_int(110); box2max_y = fp32_from_int(23); box2max_z = fp32_from_int(160);
+    box2col_r = 179; box2col_g = 179; box2col_b = 102;
+
+    sph1c_x = fp32_from_int(60); sph1c_y = fp32_from_int(0); sph1c_z = fp32_from_int(70); sph1_r = fp32_from_int(20);
+    sph1col_r = 255; sph1col_g = 102; sph1col_b = 153;
+
+    sph2c_x = fp32_from_int(28); sph2c_y = fp32_from_int(11); sph2c_z = fp32_from_int(70); sph2_r = fp32_from_int(9);
+    sph2col_r = 255; sph2col_g = 255; sph2col_b = 77;
+
+    sph3c_x = fp32_from_int(50); sph3c_y = fp32_from_int(-100); sph3c_z = fp32_from_int(-70); sph3_r = fp32_from_int(80);
+    sph3col_r = 255; sph3col_g = 255; sph3col_b = 255;
+
+    print "P3\n"; print width; print " "; print height; print "\n255\n";
+
+    j = 0;
+    while j<height {
+        i = 0;
+        while i<width {
+            color_acc_r = 0;
+            color_acc_g = 0;
+            color_acc_b = 0;
+
+            k = 0;
+            while k<rays {
+                color_r = 255;
+                color_g = 255;
+                color_b = 255;
+
+                rayorg_x = 0;
+                rayorg_y = 0;
+                rayorg_z = 0;
+                raydir_x = fp32_from_int(i -  width/2);
+                raydir_y = fp32_from_int(j - height/2);
+                raydir_z = fp32_from_int(250);
+
+                tmp1 = raydir_x; // 30 degrees rotation around y axis
+                tmp2 = raydir_z;
+                raydir_x = fp32_add(
+                             fp32_mul(
+                               tmp1,
+                               fp32_div(fp32_from_int(866), fp32_from_int(1000))),
+                             fp32_div(
+                               tmp2,
+                               fp32_from_int(2)));
+                raydir_z = fp32_add(
+                             fp32_div(
+                               tmp1,
+                               fp32_from_int(-2)),
+                             fp32_mul(
+                               tmp2,
+                               fp32_div(fp32_from_int(866), fp32_from_int(1000))));
+
+                tmp1 = fp32_sqrt(                    // the norm
+                         fp32_add(fp32_add(
+                            fp32_mul(raydir_x, raydir_x),
+                            fp32_mul(raydir_y, raydir_y)),
+                            fp32_mul(raydir_z, raydir_z)));
+                raydir_x = fp32_div(raydir_x, tmp1); // normalize the ray direction
+                raydir_y = fp32_div(raydir_y, tmp1);
+                raydir_z = fp32_div(raydir_z, tmp1);
+
+                trace(0);
+                color_acc_r = color_acc_r + color_r;
+                color_acc_g = color_acc_g + color_g;
+                color_acc_b = color_acc_b + color_b;
+                k = k + 1;
+            }
+
+            color_r = color_acc_r/rays;
+            color_g = color_acc_g/rays;
+            color_b = color_acc_b/rays;
+
+            print color_r; print " " ; print color_g; print " "; println color_b;
+            i = i + 1;
+        }
+        j = j + 1;
+    }
+}
+
