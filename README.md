@@ -60,6 +60,9 @@ make gfx
 ### Mandelbrot set
 <img src="https://ssloy.github.io/tinycompiler/home/mandelbrot.png" width="336">
 
+### Ray tracer
+![](https://ssloy.github.io/tinycompiler/home/raytracer.png)
+
 ### Zero-player breakout game
 ![](https://ssloy.github.io/tinycompiler/home/breakout.gif)
 
