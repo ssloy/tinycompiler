@@ -53,7 +53,7 @@ make test
 ```
 
 ## Graphics!
-It is so dull to compute Fibonacci numbers, so here are more eyecandy examples for our compiler,  check test-programs/gfx/*.wend files.
+It is so dull to compute Fibonacci numbers, so here are more eyecandy examples for our compiler,  check [test-programs/gfx/*.wend](https://github.com/ssloy/tinycompiler/tree/main/test-programs/gfx) files.
 ```sh
 make gfx
 ```
