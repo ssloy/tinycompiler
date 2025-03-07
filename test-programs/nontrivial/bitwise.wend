@@ -17,10 +17,10 @@ main() {
             result = -2147483648;
         }
         if (a<0) {
-            a = a + 2147483648;
+            a = (a + 1073741824) + 1073741824; // +2147483648 does not fit into signed 32 bits, split into two halves
         }
         if (b<0) {
-            b = b + 2147483648;
+            b = (b + 1073741824) + 1073741824;
         }
         pow = 1;
         while a>0 || b>0 {
