@@ -17,12 +17,11 @@ class Function:
     def __init__(self, name, args, var, fun, body, deco):
         self.name = name                                                 # function name, string
         self.args = args                                                 # function arguments, list of tuples (name, type)
-        self.var  = var                                                  # local variables, list of tuples (name, type)
+        self.var  = var                                                  # local variables, list of Var objects
         self.fun  = fun                                                  # nested functions, list of Function nodes
         self.body = body                                                 # function body, list of statement nodes (Print/Return/Assign/While/IfThenElse/FunCall)
         self.deco = deco | {'label' : name+'_'+LabelFactory.new_label()} # decoration dictionary to be filled by the parser (line number) and by the semantic analyzer (return type, scope id etc)
 
-# statements
 class Print:
     def __init__(self, expr, newline, deco):
         self.expr, self.newline, self.deco = expr, newline, deco
@@ -43,7 +42,6 @@ class IfThenElse:
     def __init__(self, expr, ibody, ebody, deco):
         self.expr, self.ibody, self.ebody, self.deco = expr, ibody, ebody, deco
 
-# expressions
 class ArithOp:
     def __init__(self, op, left, right, deco):
         self.op, self.left, self.right, self.deco = op, left, right, deco | {'type' : Type.INT}

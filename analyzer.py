@@ -6,9 +6,9 @@ def decorate(ast):
         raise Exception('Cannot find a valid entry point')
     symtable = SymbolTable()
     symtable.add_fun(ast.name, [], ast.deco)
-    ast.deco['strings'] = set() # collection of constant strings from the program
-    process_scope(ast, symtable)
-    process_scope(ast, symtable)
+    ast.deco['strings'] = set()  # collection of constant strings from the program
+    process_scope(ast, symtable) # N.B.: the decoration is made in two passes, this is
+    process_scope(ast, symtable) # an ugly way to propagate deco['var_cnt'] from functions to funcalls
     ast.deco['scope_cnt'] = symtable.scope_cnt # total number of functions, necessary for the static scope display table allocation
 
 def process_scope(fun, symtable):
